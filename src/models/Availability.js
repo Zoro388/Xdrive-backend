@@ -1,24 +1,23 @@
 import mongoose from "mongoose";
 
-const timeSlotSchema = new mongoose.Schema({
-  time: {
-    type: String,
-    required: true,
-  },
-  isBooked: {
-    type: Boolean,
-    default: false,
-  },
-});
-
 const availabilitySchema = new mongoose.Schema(
   {
     date: {
       type: Date,
       required: true,
-      unique: true, // prevent duplicate dates
     },
-    timeSlots: [timeSlotSchema],
+    time: {
+      type: String, // e.g., "09:00 AM"
+      required: true,
+    },
+    hours: {
+      type: Number, // duration in hours
+      required: true,
+    },
+    isBooked: {
+      type: Boolean,
+      default: false, // marks if the slot has been booked
+    },
   },
   { timestamps: true }
 );

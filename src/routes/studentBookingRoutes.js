@@ -3,8 +3,8 @@ import {
   getBookingHistory,
   getUpcomingBookings,
   cancelBooking,
-  rescheduleBooking,
-  bookLesson, // ✅ add this import
+  updateBooking, // ✅ matches controller
+  bookLesson
 } from "../controllers/studentBookingController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
@@ -24,10 +24,10 @@ router.get("/upcoming", getUpcomingBookings);
 // Cancel booking
 router.put("/cancel/:bookingId", cancelBooking);
 
-// Reschedule booking
-router.put("/reschedule/:bookingId", rescheduleBooking);
+// Update booking (reschedule)
+router.put("/update/:bookingId", updateBooking);
 
-// ✅ Book a lesson
+// Book a lesson
 router.post("/book", bookLesson);
 
 export default router;
