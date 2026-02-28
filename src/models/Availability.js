@@ -2,22 +2,20 @@ import mongoose from "mongoose";
 
 const availabilitySchema = new mongoose.Schema(
   {
-    dayOfWeek: {
-      type: Number,
+    date: {
+      type: Date,
       required: true,
-      min: 0,
-      max: 6,
     },
     startTime: {
-      type: String,
+      type: String, // e.g., "09:00 AM"
       required: true,
     },
     endTime: {
-      type: String,
+      type: String, // e.g., "10:00 AM"
       required: true,
     },
     maxBookings: {
-      type: Number,
+      type: Number, // max students allowed for this slot
       required: true,
     },
     bookings: [
@@ -34,4 +32,6 @@ const availabilitySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("Availability", availabilitySchema);
+const Availability = mongoose.model("Availability", availabilitySchema);
+
+export default Availability;

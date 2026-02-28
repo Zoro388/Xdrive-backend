@@ -1,29 +1,28 @@
 import Availability from "../models/Availability.js";
+import moment from "moment";
 
 /*
 ==================================================
-CREATE WEEKLY AVAILABILITY
+CREATE AVAILABILITY
 ==================================================
 */
 export const createAvailability = async (req, res) => {
   try {
-    const { dayOfWeek, startTime, endTime, maxBookings } = req.body;
+    const { date, startTime, endTime, maxBookings } = req.body;
 
-    if (
-      dayOfWeek === undefined ||
-      !startTime ||
-      !endTime ||
-      !maxBookings
-    ) {
+    if (!date || !startTime || !endTime || !maxBookings) {
       return res.status(400).json({
         success: false,
-        message: "dayOfWeek, startTime, endTime and maxBookings are required",
+        message: "date, startTime, endTime and maxBookings are required",
       });
     }
 
+    const parsedDate = new Date(date);
+    parsedDate.setHours(0, 0, 0, 0);
+
     // Check if same slot already exists
     const existing = await Availability.findOne({
-      dayOfWeek,
+      date: parsedDate,
       startTime,
       endTime,
     });
@@ -36,7 +35,7 @@ export const createAvailability = async (req, res) => {
     }
 
     const availability = await Availability.create({
-      dayOfWeek,
+      date: parsedDate,
       startTime,
       endTime,
       maxBookings,
@@ -47,7 +46,10 @@ export const createAvailability = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Availability created successfully",
-      availability,
+      availability: {
+        ...availability.toObject(),
+        date: moment(availability.date).format("MM/DD/YYYY"),
+      },
     });
   } catch (error) {
     console.error("Create availability error:", error);
@@ -65,11 +67,21 @@ GET ALL AVAILABILITY
 */
 export const getAllAvailability = async (req, res) => {
   try {
-    const availability = await Availability.find().sort({ dayOfWeek: 1 });
+    const availability = await Availability.find().sort({ date: 1 });
+
+    const formattedAvailability = availability.map((a) => ({
+      _id: a._id,
+      date: moment(a.date).format("MM/DD/YYYY"), // calendar format
+      startTime: a.startTime,
+      endTime: a.endTime,
+      maxBookings: a.maxBookings,
+      bookings: a.bookings,
+      isActive: a.isActive,
+    }));
 
     res.status(200).json({
       success: true,
-      availability,
+      availability: formattedAvailability,
     });
   } catch (error) {
     console.error("Get availability error:", error);
@@ -88,7 +100,7 @@ UPDATE AVAILABILITY
 export const updateAvailability = async (req, res) => {
   try {
     const { availabilityId } = req.params;
-    const { startTime, endTime, maxBookings, isActive } = req.body;
+    const { date, startTime, endTime, maxBookings, isActive } = req.body;
 
     const availability = await Availability.findById(availabilityId);
 
@@ -99,6 +111,7 @@ export const updateAvailability = async (req, res) => {
       });
     }
 
+    if (date) availability.date = new Date(date);
     if (startTime) availability.startTime = startTime;
     if (endTime) availability.endTime = endTime;
     if (maxBookings) availability.maxBookings = maxBookings;
@@ -109,7 +122,10 @@ export const updateAvailability = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Availability updated successfully",
-      availability,
+      availability: {
+        ...availability.toObject(),
+        date: moment(availability.date).format("MM/DD/YYYY"),
+      },
     });
   } catch (error) {
     console.error("Update availability error:", error);
