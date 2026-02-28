@@ -2,26 +2,36 @@ import mongoose from "mongoose";
 
 const availabilitySchema = new mongoose.Schema(
   {
-    date: {
-      type: Date,
+    dayOfWeek: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 6,
+    },
+    startTime: {
+      type: String,
       required: true,
     },
-    time: {
-      type: String, // e.g., "09:00 AM"
+    endTime: {
+      type: String,
       required: true,
     },
-    hours: {
-      type: Number, // duration in hours
+    maxBookings: {
+      type: Number,
       required: true,
     },
-    isBooked: {
+    bookings: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Booking",
+      },
+    ],
+    isActive: {
       type: Boolean,
-      default: false, // marks if the slot has been booked
+      default: true,
     },
   },
   { timestamps: true }
 );
 
-const Availability = mongoose.model("Availability", availabilitySchema);
-
-export default Availability;
+export default mongoose.model("Availability", availabilitySchema);

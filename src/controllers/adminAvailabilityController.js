@@ -2,42 +2,46 @@ import Availability from "../models/Availability.js";
 
 /*
 ==================================================
-CREATE AVAILABILITY (OPEN A DATE)
+CREATE WEEKLY AVAILABILITY
 ==================================================
 */
 export const createAvailability = async (req, res) => {
   try {
-    const { date, timeSlots } = req.body;
+    const { dayOfWeek, startTime, endTime, maxBookings } = req.body;
 
-    if (!date || !timeSlots || timeSlots.length === 0) {
+    if (
+      dayOfWeek === undefined ||
+      !startTime ||
+      !endTime ||
+      !maxBookings
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Date and time slots are required",
+        message: "dayOfWeek, startTime, endTime and maxBookings are required",
       });
     }
 
-    const normalizedDate = new Date(date);
-    normalizedDate.setHours(0, 0, 0, 0);
-
-    if (normalizedDate < new Date().setHours(0, 0, 0, 0)) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot create availability for past dates",
-      });
-    }
-
-    const existing = await Availability.findOne({ date: normalizedDate });
+    // Check if same slot already exists
+    const existing = await Availability.findOne({
+      dayOfWeek,
+      startTime,
+      endTime,
+    });
 
     if (existing) {
       return res.status(400).json({
         success: false,
-        message: "Availability already exists for this date",
+        message: "Availability already exists for this time range",
       });
     }
 
     const availability = await Availability.create({
-      date: normalizedDate,
-      timeSlots,
+      dayOfWeek,
+      startTime,
+      endTime,
+      maxBookings,
+      bookings: [],
+      isActive: true,
     });
 
     res.status(201).json({
@@ -46,7 +50,11 @@ export const createAvailability = async (req, res) => {
       availability,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Create availability error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -57,34 +65,30 @@ GET ALL AVAILABILITY
 */
 export const getAllAvailability = async (req, res) => {
   try {
-    const availability = await Availability.find().sort({ date: 1 });
-
-    if (!availability.length) {
-      return res.status(200).json({
-        success: true,
-        message: "No availability set yet",
-        availability: [],
-      });
-    }
+    const availability = await Availability.find().sort({ dayOfWeek: 1 });
 
     res.status(200).json({
       success: true,
       availability,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Get availability error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
 /*
 ==================================================
-UPDATE AVAILABILITY (EDIT TIME SLOTS)
+UPDATE AVAILABILITY
 ==================================================
 */
 export const updateAvailability = async (req, res) => {
   try {
     const { availabilityId } = req.params;
-    const { timeSlots } = req.body;
+    const { startTime, endTime, maxBookings, isActive } = req.body;
 
     const availability = await Availability.findById(availabilityId);
 
@@ -95,7 +99,10 @@ export const updateAvailability = async (req, res) => {
       });
     }
 
-    availability.timeSlots = timeSlots;
+    if (startTime) availability.startTime = startTime;
+    if (endTime) availability.endTime = endTime;
+    if (maxBookings) availability.maxBookings = maxBookings;
+    if (isActive !== undefined) availability.isActive = isActive;
 
     await availability.save();
 
@@ -105,7 +112,11 @@ export const updateAvailability = async (req, res) => {
       availability,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Update availability error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -134,6 +145,10 @@ export const deleteAvailability = async (req, res) => {
       message: "Availability deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Delete availability error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
