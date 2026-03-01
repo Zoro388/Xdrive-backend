@@ -16,29 +16,31 @@ const app = express();
 connectDB();
 
 // =======================
+// // =======================
 // CORS Setup
 // =======================
-const allowedOrigins =
-  process.env.NODE_ENV === "production"
-    ? [process.env.FRONTEND_URL]
-    : ["http://localhost:3000", "http://localhost:5173"]; // add your dev ports here
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  process.env.FRONTEND_URL, // your deployed frontend
+];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (Postman, mobile apps)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) === -1) {
-        const msg =
-          "The CORS policy for this site does not allow access from the specified Origin.";
-        return callback(new Error(msg), false);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.log("Blocked by CORS:", origin);
+        return callback(new Error("Not allowed by CORS"));
       }
-      return callback(null, true);
     },
-    credentials: true, // needed if frontend sends cookies or auth headers
+    credentials: true,
   })
 );
-
 // =======================
 // Middlewares
 // =======================
