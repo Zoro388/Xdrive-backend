@@ -7,17 +7,14 @@ const bookingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    date: {
-      type: Date,
-      required: true,
-    },
-    timeSlot: {
-      type: String, // e.g., "09:00-10:00"
+    slot: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Availability",
       required: true,
     },
     status: {
       type: String,
-      enum: ["booked", "completed", "cancelled", "rescheduled"],
+      enum: ["booked", "completed", "cancelled"],
       default: "booked",
     },
     paymentStatus: {

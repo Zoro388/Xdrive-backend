@@ -4,7 +4,8 @@ import {
   getUpcomingBookings,
   cancelBooking,
   updateBooking, // ✅ matches controller
-  bookLesson
+  bookLesson,
+  getAvailableSlots
 } from "../controllers/studentBookingController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
@@ -30,4 +31,6 @@ router.put("/update/:bookingId", updateBooking);
 // Book a lesson
 router.post("/book", bookLesson);
 
+// get available slots
+router.get("/availability", protect, authorizeRoles("student"), getAvailableSlots);
 export default router;

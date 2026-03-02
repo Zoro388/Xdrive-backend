@@ -15,8 +15,7 @@ const app = express();
 // connect database
 connectDB();
 
-// =======================
-// // =======================
+
 // CORS Setup
 // =======================
 
@@ -54,6 +53,24 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/student/bookings", studentBookingRoutes);
 app.use("/api/admin/availability", adminAvailabilityRoutes);
 app.use("/api/auth", authRoutes);
+
+
+
+
+/* 🔥 ADD DEBUG ROUTE HERE */
+app.get("/test-email", async (req, res) => {
+  try {
+    await sendEmail(
+      "yourrealemail@gmail.com",
+      "Test Email",
+      "<h1>Email Working!</h1>"
+    );
+    res.json({ message: "Email sent successfully" });
+  } catch (err) {
+    console.error("Test email error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // =======================
 // Health Check

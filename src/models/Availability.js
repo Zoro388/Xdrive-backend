@@ -14,16 +14,23 @@ const availabilitySchema = new mongoose.Schema(
       type: String, // e.g., "10:00 AM"
       required: true,
     },
-    maxBookings: {
-      type: Number, // max students allowed for this slot
+    price: {
+      type: Number,
       required: true,
     },
-    bookings: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Booking",
-      },
-    ],
+    hours: {
+      type: Number, // duration in hours
+      required: true,
+    },
+    isBooked: {
+      type: Boolean,
+      default: false,
+    },
+    bookedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -32,6 +39,4 @@ const availabilitySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Availability = mongoose.model("Availability", availabilitySchema);
-
-export default Availability;
+export default mongoose.model("Availability", availabilitySchema);

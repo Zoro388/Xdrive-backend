@@ -9,46 +9,47 @@ const nextDateForDay = (dayOfWeek) => {
   resultDate.setHours(0, 0, 0, 0);
   return resultDate;
 };
-
-// =======================
-// Book a Lesson
-// =======================
+/*
+==================================================
+BOOK SLOT
+==================================================
+*/
 export const bookLesson = async (req, res) => {
   try {
-    const { dayOfWeek, timeSlot, paymentStatus = "pending" } = req.body;
+    const { slotId } = req.body;
 
-    if (dayOfWeek === undefined || !timeSlot) {
-      return res.status(400).json({ message: "dayOfWeek and timeSlot are required" });
+    if (!slotId) {
+      return res.status(400).json({ message: "slotId is required" });
     }
 
-    const slot = await Availability.findOne({
-      dayOfWeek,
-      startTime: { $lte: timeSlot },
-      endTime: { $gte: timeSlot },
-      isActive: true,
-    });
+    const slot = await Availability.findById(slotId);
 
-    if (!slot) return res.status(404).json({ message: "No available slot for this time" });
-    if (slot.bookings.length >= slot.maxBookings)
-      return res.status(400).json({ message: "This slot is fully booked" });
+    if (!slot) return res.status(404).json({ message: "Slot not found" });
 
-    const booking = await Booking.create({
-      student: req.user._id,
-      date: nextDateForDay(dayOfWeek),
-      timeSlot,
-      paymentStatus,
-    });
+    if (slot.isBooked) {
+      return res.status(400).json({ message: "Slot already booked" });
+    }
 
-    slot.bookings.push(booking._id);
+    // Mark slot booked
+    slot.isBooked = true;
+    slot.bookedBy = req.user._id;
     await slot.save();
 
-    res.status(201).json({ message: "Lesson booked successfully", booking });
+    // Create booking record
+    const booking = await Booking.create({
+      student: req.user._id,
+      slot: slot._id,
+    });
+
+    res.status(201).json({
+      message: "Slot booked successfully",
+      slot,
+      booking,
+    });
   } catch (error) {
-    console.error("Book lesson error:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
 // =======================
 // Cancel Booking
 // =======================
@@ -165,6 +166,27 @@ export const getBookingHistory = async (req, res) => {
     res.status(200).json({ bookings });
   } catch (error) {
     console.error("Get booking history error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// ==================================================
+// GET AVAILABLE SLOTS (WEEK VIEW)
+// ==================================================
+export const getAvailableSlots = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const slots = await Availability.find({
+      isActive: true,
+      isBooked: false,
+      date: { $gte: today },
+    }).sort({ date: 1 });
+
+    res.status(200).json({ slots });
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
