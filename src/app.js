@@ -21,6 +21,7 @@ connectDB();
 
 const allowedOrigins = [
   "http://localhost:3000",
+  "http://localhost:3001",
   "http://localhost:5173",
   process.env.FRONTEND_URL, // your deployed frontend
 ];
