@@ -3,21 +3,25 @@ import nodemailer from "nodemailer";
 const sendEmail = async (to, subject, html) => {
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail", // 🔥 use service instead of host
+      host: "smtp.gmail.com",
+      port: 587,          // ✅ CHANGE THIS
+      secure: false,      // ✅ FALSE for 587
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // must be Gmail App Password
+        pass: process.env.EMAIL_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
-    const info = await transporter.sendMail({
+    await transporter.sendMail({
       from: `"XDRIVE Driving School" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
     });
 
-    console.log("Email sent:", info.messageId);
   } catch (error) {
     console.error("EMAIL ERROR:", error);
     throw new Error("Email could not be sent");
