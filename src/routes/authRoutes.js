@@ -4,7 +4,8 @@ import {
   login, 
   forgotPassword, 
   resetPassword,
-  authStatus
+  authStatus,
+  logoutUser
 } from "../controllers/authController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -33,5 +34,9 @@ AUTH STATUS ROUTE
 ========================
 */
 router.get("/status", protect, authStatus);
+
+
+// Logout
+router.post("/logout", protect, logoutUser);
 
 export default router;

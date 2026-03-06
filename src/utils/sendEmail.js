@@ -4,14 +4,11 @@ const sendEmail = async (to, subject, html) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
-      port: 587,          // ✅ CHANGE THIS
-      secure: false,      // ✅ FALSE for 587
+      port: 587,          // ✅ Use 587 instead of 465
+      secure: false,      // ✅ MUST be false for 587
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false,
+        pass: process.env.EMAIL_PASS, // 16-character app password
       },
     });
 
@@ -22,6 +19,7 @@ const sendEmail = async (to, subject, html) => {
       html,
     });
 
+    console.log("Email sent successfully");
   } catch (error) {
     console.error("EMAIL ERROR:", error);
     throw new Error("Email could not be sent");

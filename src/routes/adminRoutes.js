@@ -1,14 +1,15 @@
 import express from "express";
 import {
   getAllBookings,
-  updateBookingStatus,
+  updateBookingStatus,  // ✅ now exists
   getAdminDashboard,
+  markLessonCompleted,
+  cancelBooking
 } from "../controllers/adminController.js";
 
 import {
   createAvailability,
   getAllAvailability,
-  updateAvailability,
   deleteAvailability,
 } from "../controllers/adminAvailabilityController.js";
 
@@ -16,6 +17,7 @@ import { protect } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
+
 
 /*
 ==================================================
@@ -47,14 +49,11 @@ AVAILABILITY MANAGEMENT
 */
 router.post("/availability", createAvailability);        // Create availability
 router.get("/availability", getAllAvailability);         // Get all availability
-router.put("/availability/:availabilityId", updateAvailability);  // Update
+// router.put("/availability/:availabilityId", updateAvailability);  // Update
 router.delete("/availability/:availabilityId", deleteAvailability); // Delete
+router.put("/bookings/complete/:bookingId", markLessonCompleted);
 
-/*
-Future routes:
-- Student management
-- Reports
-- Income summary
-*/
+router.put("/bookings/cancel/:bookingId", cancelBooking);
 
 export default router;
+
