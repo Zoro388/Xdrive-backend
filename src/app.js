@@ -7,6 +7,8 @@ import studentRoutes from "./routes/studentRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import studentBookingRoutes from "./routes/studentBookingRoutes.js";
 import adminAvailabilityRoutes from "./routes/adminAvailabilityRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js"
 
 dotenv.config();
 
@@ -54,8 +56,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/student/bookings", studentBookingRoutes);
 app.use("/api/admin/availability", adminAvailabilityRoutes);
 app.use("/api/auth", authRoutes);
-
-
+app.use("/api", contactRoutes);
+app.use("/api/payment", paymentRoutes)
 
 
 /* 🔥 ADD DEBUG ROUTE HERE */

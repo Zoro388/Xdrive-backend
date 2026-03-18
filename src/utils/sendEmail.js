@@ -3,12 +3,10 @@ import nodemailer from "nodemailer";
 const sendEmail = async (to, subject, html) => {
   try {
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: Number(process.env.EMAIL_PORT),
-      secure: false,
+      service: "gmail", // ← important
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS, // 16-char Gmail App Password
       },
     });
 
@@ -20,6 +18,7 @@ const sendEmail = async (to, subject, html) => {
     });
 
     console.log("Email sent successfully");
+
   } catch (error) {
     console.error("EMAIL ERROR:", error);
     throw new Error("Email could not be sent");
