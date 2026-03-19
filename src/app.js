@@ -25,6 +25,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:5173",
+  "https://agent-69bb0b83e29a72b3037d5ab4--x-drive.netlify.app",
   process.env.FRONTEND_URL, // your deployed frontend
 ];
 
