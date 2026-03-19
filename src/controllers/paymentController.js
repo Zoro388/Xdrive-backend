@@ -4,13 +4,13 @@ import Availability from "../models/Availability.js";
 
 /*
 ===========================================
-CREATE CHECKOUT SESSION
+CREATE PAYMENT / BOOKING
 ===========================================
 */
 
 export const createCheckoutSession = async (req, res) => {
   try {
-    const { slotId } = req.body;
+    const { slotId, paymentMethod } = req.body;
 
     if (!slotId) {
       return res.status(400).json({ message: "slotId is required" });
@@ -26,43 +26,80 @@ export const createCheckoutSession = async (req, res) => {
       return res.status(400).json({ message: "Slot already booked" });
     }
 
-    // Create booking first
-    const booking = await Booking.create({
-      student: req.user._id,
-      slot: slot._id,
-    });
+    /*
+    ===========================================
+    CASH PAYMENT FLOW
+    ===========================================
+    */
+    if (paymentMethod === "cash") {
+      const booking = await Booking.create({
+        student: req.user._id,
+        slot: slotId,
+        paymentMethod: "cash",
+        paymentStatus: "pending",
+        status: "booked",
+      });
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      slot.isBooked = true;
+      slot.bookedBy = req.user._id;
+      await slot.save();
 
-      line_items: [
-        {
-          price_data: {
-            currency: "gbp",
+      return res.status(200).json({
+        message: "Booking created successfully (cash)",
+        booking,
+      });
+    }
 
-            product_data: {
-              name: "Driving Lesson",
-              description: `${slot.startTime} - ${slot.endTime}`,
+    /*
+    ===========================================
+    STRIPE PAYMENT FLOW
+    ===========================================
+    */
+    if (paymentMethod === "stripe") {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+
+        line_items: [
+          {
+            price_data: {
+              currency: "gbp",
+              product_data: {
+                name: "Driving Lesson",
+                description: `${slot.startTime} - ${slot.endTime}`,
+              },
+              unit_amount: slot.price * 100,
             },
-
-            unit_amount: slot.price * 100,
+            quantity: 1,
           },
+        ],
 
-          quantity: 1,
+        mode: "payment",
+
+        metadata: {
+          slotId: slot._id.toString(),
+          userId: req.user._id.toString(),
         },
-      ],
 
-      mode: "payment",
+        success_url: `${process.env.CLIENT_URL}/payment-success?slotId=${slot._id}&userId=${req.user._id}`,
+        cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
+      });
 
-      success_url: `${process.env.CLIENT_URL}/payment-success?bookingId=${booking._id}`,
+      return res.status(200).json({
+        url: session.url,
+      });
+    }
 
-      cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
+    /*
+    ===========================================
+    INVALID METHOD
+    ===========================================
+    */
+    return res.status(400).json({
+      message: "Invalid payment method",
     });
 
-    res.status(200).json({
-      url: session.url,
-    });
   } catch (error) {
+    console.error("Payment error:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -70,44 +107,44 @@ export const createCheckoutSession = async (req, res) => {
 
 /*
 ===========================================
-VERIFY PAYMENT
+CONFIRM STRIPE PAYMENT
 ===========================================
 */
 
 export const confirmPayment = async (req, res) => {
   try {
-    const { bookingId } = req.body;
+    const { slotId, userId } = req.body;
 
-    const booking = await Booking.findById(bookingId);
+    const slot = await Availability.findById(slotId);
 
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
+    if (!slot) {
+      return res.status(404).json({ message: "Slot not found" });
     }
 
-    booking.paymentStatus = "paid";
-    booking.status = "booked";
+    if (slot.isBooked) {
+      return res.status(400).json({ message: "Slot already booked" });
+    }
 
-    await booking.save();
-
-    const slot = await Availability.findById(booking.slot);
+    const booking = await Booking.create({
+      student: userId,
+      slot: slotId,
+      paymentMethod: "stripe",
+      paymentStatus: "paid",
+      status: "booked",
+    });
 
     slot.isBooked = true;
-    slot.bookedBy = booking.student;
+    slot.bookedBy = userId;
 
     await slot.save();
 
     res.status(200).json({
-      message: "Payment confirmed",
+      message: "Payment successful, booking created",
       booking,
     });
+
   } catch (error) {
+    console.error("Confirm error:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
-
-
-
-
-
-
