@@ -80,8 +80,8 @@ export const createCheckoutSession = async (req, res) => {
           userId: req.user._id.toString(),
         },
 
-        success_url: `${process.env.CLIENT_URL}/payment-success?slotId=${slot._id}&userId=${req.user._id}`,
-        cancel_url: `${process.env.CLIENT_URL}/payment-cancel`,
+        success_url: `${process.env.FRONTEND_URL}/payment-success?slotId=${slot._id}&userId=${req.user._id}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel`,
       });
 
       return res.status(200).json({
