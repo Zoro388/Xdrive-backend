@@ -143,18 +143,27 @@ GET BOOKING HISTORY
 export const getBookingHistory = async (req, res) => {
   try {
 
-    const bookings = await Booking.find({
+    const history = await Booking.find({
       student: req.user._id,
       status: { $in: ["completed", "cancelled"] }
     })
-      .populate("slot")
+      .populate({
+        path: "slot",
+        select: "date startTime endTime price"
+      })
       .sort({ createdAt: -1 });
 
-    res.json({ bookings });
+      res.status(200).json({
+        success: true,
+        count: history.length,
+        history
+      });
 
   } catch (error) {
     console.error("Booking history error:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: error.message });
   }
 };
 
