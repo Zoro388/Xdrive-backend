@@ -106,7 +106,7 @@ RESET PASSWORD EMAIL
 export const sendResetEmail = async (email, token) => {
 
 const resetLink =
-`${process.env.CLIENT_URL}/reset-password?token=${token}&email=${email}`;
+`${process.env.FRONTEND_URL}/reset-password?token=${token}&email=${email}`;
 
 await resend.emails.send({
 from: process.env.EMAIL_FROM,
