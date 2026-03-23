@@ -1,30 +1,41 @@
-import { resend } from "../utils/resend.js";
+import resend  from "../utils/resend.js";
 
 /*
 ========================================
-SEND TEST EMAIL
+SOCIAL FOOTER
 ========================================
 */
 
-export const sendTestEmail = async (email) => {
+const socialFooter = `
+<div style="text-align:center; margin-top:20px;">
 
-try {
+<a href="#" style="margin:0 10px;">
+<img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="24"/>
+</a>
 
-await resend.emails.send({
-from: process.env.EMAIL_FROM,
-to: email,
-subject: "Resend Test Email",
-html: `
-<h2>Email Working</h2>
-<p>Your X-Drive email service is working successfully.</p>
-`
-});
+<a href="#" style="margin:0 10px;">
+<img src="https://cdn-icons-png.flaticon.com/512/733/733558.png" width="24"/>
+</a>
 
-} catch (error) {
-console.log("Email error:", error.message);
-throw error;
-}
-};
+<a href="#" style="margin:0 10px;">
+<img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" width="24"/>
+</a>
+
+<a href="#" style="margin:0 10px;">
+<img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" width="24"/>
+</a>
+
+<a href="#" style="margin:0 10px;">
+<img src="https://cdn-icons-png.flaticon.com/512/3536/3536505.png" width="24"/>
+</a>
+
+<a href="#" style="margin:0 10px;">
+<img src="https://cdn-icons-png.flaticon.com/512/733/733646.png" width="24"/>
+</a>
+
+</div>
+`;
+
 
 
 /*
@@ -36,49 +47,169 @@ WELCOME EMAIL
 export const sendWelcomeEmail = async (email, name) => {
 
 await resend.emails.send({
-
 from: process.env.EMAIL_FROM,
-
 to: email,
-
-subject: "Welcome to X-Drive",
-
+subject: "Welcome to X-Drive Academy",
 html: `
-<h2>Hello ${name}</h2>
-<p>Welcome to X-Drive Driving School.</p>
-<p>Your account has been created successfully.</p>
+
+<div style="font-family:Arial; background:#f4f6f8; padding:40px;">
+
+<div style="max-width:600px; margin:auto; background:white; border-radius:8px; overflow:hidden;">
+
+<div style="background:#012169; padding:20px; color:white; text-align:center;">
+<h2>X-Drive Driving School</h2>
+</div>
+
+<div style="padding:30px;">
+
+<h2 style="color:#012169;">Welcome ${name}</h2>
+
+<p style="font-size:16px;">
+Your account has been successfully created.
+</p>
+
+<p style="font-size:16px;">
+You can now book driving lessons and make payments easily.
+</p>
+
+<div style="text-align:center; margin-top:30px;">
+<a href="${process.env.FRONTEND_URL}"
+style="background:#C8102E; color:white; padding:12px 20px;
+text-decoration:none; border-radius:5px;">
+Go to Dashboard
+</a>
+</div>
+
+${socialFooter}
+
+</div>
+
+<div style="background:#012169; padding:15px; text-align:center; color:white;">
+X-Drive Driving School © ${new Date().getFullYear()}
+</div>
+
+</div>
+
+</div>
 `
 });
 };
 
 
+
 /*
 ========================================
-FORGOT PASSWORD EMAIL
+RESET PASSWORD EMAIL
 ========================================
 */
 
 export const sendResetEmail = async (email, token) => {
 
-const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}&email=${email}`;
+const resetLink =
+`${process.env.CLIENT_URL}/reset-password?token=${token}&email=${email}`;
 
 await resend.emails.send({
-
 from: process.env.EMAIL_FROM,
-
 to: email,
-
 subject: "Reset Your Password",
-
 html: `
-<h2>Password Reset</h2>
-<p>Click the link below to reset your password</p>
 
-<a href="${resetLink}">
+<div style="font-family:Arial; background:#f4f6f8; padding:40px;">
+
+<div style="max-width:600px; margin:auto; background:white; border-radius:8px;">
+
+<div style="background:#012169; padding:20px; color:white; text-align:center;">
+<h2>Password Reset</h2>
+</div>
+
+<div style="padding:30px;">
+
+<h3 style="color:#012169;">Reset Your Password</h3>
+
+<p>Click the button below to reset your password.</p>
+
+<div style="text-align:center; margin-top:30px;">
+<a href="${resetLink}"
+style="background:#C8102E; color:white; padding:12px 20px;
+text-decoration:none; border-radius:5px;">
 Reset Password
 </a>
+</div>
 
-<p>This link expires in 10 minutes</p>
+<p style="margin-top:20px; color:#666;">
+This link expires in 10 minutes.
+</p>
+
+${socialFooter}
+
+</div>
+
+<div style="background:#012169; padding:15px; text-align:center; color:white;">
+X-Drive Driving School © ${new Date().getFullYear()}
+</div>
+
+</div>
+
+</div>
+`
+});
+};
+
+
+
+/*
+========================================
+BOOKING EMAIL
+========================================
+*/
+
+export const sendBookingEmail = async (
+email,
+name,
+date,
+time,
+instructor
+) => {
+
+await resend.emails.send({
+from: process.env.EMAIL_FROM,
+to: email,
+subject: "Booking Confirmation",
+html: `
+
+<div style="font-family:Arial; background:#f4f6f8; padding:40px;">
+
+<div style="max-width:600px; margin:auto; background:white; border-radius:8px;">
+
+<div style="background:#012169; padding:20px; color:white; text-align:center;">
+<h2>Booking Confirmed</h2>
+</div>
+
+<div style="padding:30px;">
+
+<h3 style="color:#012169;">Hello ${name}</h3>
+
+<p>Your lesson has been booked successfully.</p>
+
+<div style="background:#f9f9f9; padding:20px; border-radius:5px;">
+
+<p><strong>Date:</strong> ${date}</p>
+<p><strong>Time:</strong> ${time}</p>
+<p><strong>Instructor:</strong> ${instructor}</p>
+
+</div>
+
+${socialFooter}
+
+</div>
+
+<div style="background:#012169; padding:15px; text-align:center; color:white;">
+X-Drive Driving School
+</div>
+
+</div>
+
+</div>
 `
 });
 };

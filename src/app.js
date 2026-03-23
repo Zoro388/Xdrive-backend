@@ -9,7 +9,7 @@ import studentBookingRoutes from "./routes/studentBookingRoutes.js";
 import adminAvailabilityRoutes from "./routes/adminAvailabilityRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js"
-import emailRoutes from "./routes/emailRoutes.js"
+// import emailRoutes from "./routes/emailRoutes.js"
 
 dotenv.config();
 
@@ -81,7 +81,7 @@ app.use("/api/admin/availability", adminAvailabilityRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api", contactRoutes);
 app.use("/api/payment", paymentRoutes);
-app.use("/api/email", emailRoutes);
+// app.use("/api/email", emailRoutes);
 
 
 /* 🔥 ADD DEBUG ROUTE HERE */

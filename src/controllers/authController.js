@@ -1,330 +1,324 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/generateToken.js";
-import sendEmail from "../utils/sendEmail.js";
+// import sendEmail from "../utils/sendEmail.js";
 import crypto from "crypto";
 
-/* =========================================================
-   EMAIL TEMPLATES
-========================================================= */
 
-const welcomeMessage = (name) => `
-<div style="font-family: Arial, sans-serif; background:#f4f6f9; padding:30px;">
-  <div style="max-width:600px; margin:auto; background:white; border-radius:8px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
 
-    <div style="background:#012169; color:white; padding:20px; text-align:center;">
-      <h1 style="margin:0;">XDRIVE Driving School</h1>
-      <p style="margin:5px 0 0;">Drive Smart. Drive Safe.</p>
-    </div>
+import {
+sendWelcomeEmail,
+sendResetEmail
+} from "../services/emailService.js";
 
-    <div style="padding:30px; color:#333;">
-      <h2 style="color:#012169;">Welcome, ${name}!</h2>
 
-      <p>
-        Your account has been successfully created with 
-        <strong>XDRIVE Driving School</strong>. 
-        We are excited to have you begin your journey towards becoming a 
-        confident and responsible driver.
-      </p>
+/*
+========================================
+GENERATE JWT TOKEN
+========================================
+*/
 
-      <p>
-        You can now access your dashboard to manage your bookings, 
-        track lessons, and stay updated with your driving progress.
-      </p>
-
-      <div style="text-align:center; margin:30px 0;">
-        <a href="${process.env.FRONTEND_URL}" 
-        style="background:#C8102E; color:white; padding:12px 25px; text-decoration:none; border-radius:5px; font-weight:bold;">
-        Go to Dashboard
-        </a>
-      </div>
-
-      <p>
-        If you have any questions, feel free to contact our support team.
-        We wish you a safe and enjoyable driving experience!
-      </p>
-
-      <p style="margin-top:30px;">
-        Warm regards,<br/>
-        <strong>XDRIVE Driving School Team</strong>
-      </p>
-    </div>
-
-    <div style="background:#012169; color:white; text-align:center; padding:12px; font-size:12px;">
-      © ${new Date().getFullYear()} XDRIVE Driving School • All Rights Reserved
-    </div>
-
-  </div>
-</div>
-`;
+// const generateToken = (user) => {
+// return jwt.sign(
+// {
+// id: user._id,
+// role: user.role
+// },
+// process.env.JWT_SECRET,
+// {
+// expiresIn: "7d"
+// }
+// );
+// };
 
 
 
-const forgotPasswordMessage = (resetUrl) => `
-<div style="font-family: Arial, sans-serif; background:#f4f6f9; padding:30px;">
-  <div style="max-width:600px; margin:auto; background:white; border-radius:8px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-
-    <div style="background:#012169; color:white; padding:20px; text-align:center;">
-      <h1 style="margin:0;">XDRIVE Driving School</h1>
-    </div>
-
-    <div style="padding:30px; color:#333;">
-      <h2 style="color:#012169;">Password Reset Request</h2>
-
-      <p>
-        We received a request to reset your password for your 
-        <strong>XDRIVE Driving School</strong> account.
-      </p>
-
-      <p>
-        Click the button below to create a new password. 
-        For security reasons, this link will expire in 
-        <strong>15 minutes</strong>.
-      </p>
-
-      <div style="text-align:center; margin:30px 0;">
-        <a href="${resetUrl}" 
-        style="background:#C8102E; color:white; padding:12px 25px; text-decoration:none; border-radius:5px; font-weight:bold;">
-        Reset Password
-        </a>
-      </div>
-
-      <p>
-        If you did not request this password reset, please ignore this email. 
-        Your account will remain secure.
-      </p>
-
-      <p style="margin-top:30px;">
-        Regards,<br/>
-        <strong>XDRIVE Driving School Support Team</strong>
-      </p>
-    </div>
-
-    <div style="background:#012169; color:white; text-align:center; padding:12px; font-size:12px;">
-      © ${new Date().getFullYear()} XDRIVE Driving School • All Rights Reserved
-    </div>
-
-  </div>
-</div>
-`;
-
-
-
-const resetSuccessMessage = (name) => `
-<div style="font-family: Arial, sans-serif; background:#f4f6f9; padding:30px;">
-  <div style="max-width:600px; margin:auto; background:white; border-radius:8px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
-
-    <div style="background:#012169; color:white; padding:20px; text-align:center;">
-      <h1 style="margin:0;">XDRIVE Driving School</h1>
-    </div>
-
-    <div style="padding:30px; color:#333;">
-      <h2 style="color:#012169;">Hello ${name},</h2>
-
-      <p>
-        Your password has been successfully reset.
-      </p>
-
-      <p>
-        You can now log in to your account using your new password 
-        and continue managing your driving lessons.
-      </p>
-
-      <div style="text-align:center; margin:30px 0;">
-        <a href="${process.env.FRONTEND_URL}" 
-        style="background:#C8102E; color:white; padding:12px 25px; text-decoration:none; border-radius:5px; font-weight:bold;">
-        Login to Your Account
-        </a>
-      </div>
-
-      <p>
-        If you did not perform this action, please contact our support team immediately.
-      </p>
-
-      <p style="margin-top:30px;">
-        Best regards,<br/>
-        <strong>XDRIVE Driving School Team</strong>
-      </p>
-    </div>
-
-    <div style="background:#012169; color:white; text-align:center; padding:12px; font-size:12px;">
-      © ${new Date().getFullYear()} XDRIVE Driving School • All Rights Reserved
-    </div>
-
-  </div>
-</div>
-`;
-
-/* =========================================================
-   REGISTER
-========================================================= */
+/*
+========================================
+REGISTER USER
+========================================
+*/
 
 export const register = async (req, res) => {
-  try {
-    const name = req.body.name?.trim();
-    const email = req.body.email?.trim().toLowerCase();
-    const password = req.body.password?.toString();
-    const phone = req.body.phone?.trim();
+try {
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email, and password are required" });
-    }
+const { name, email, password } = req.body;
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+if (!name || !email || !password) {
+return res.status(400).json({
+success: false,
+message: "All fields are required"
+});
+}
 
-    const user = await User.create({ name, email, phone, password });
+const existingUser = await User.findOne({ email });
 
-    await sendEmail(
-      user.email,
-      "Welcome to XDRIVE Driving School!",
-      welcomeMessage(user.name)
-    );
+if (existingUser) {
+return res.status(400).json({
+success: false,
+message: "User already exists"
+});
+}
 
-    res.status(201).json({
-      message: "Registration successful",
-      token: generateToken(user._id),
-      role: user.role,
-    });
+const hashedPassword = await bcrypt.hash(password, 10);
 
-  } catch (error) {
-    console.error("Register error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+const user = await User.create({
+name,
+email,
+password: hashedPassword
+});
+
+// Send Welcome Email
+try {
+await sendWelcomeEmail(user.email, user.name);
+} catch (emailError) {
+console.log("Welcome email failed:", emailError.message);
+}
+
+const token = generateToken(user);
+
+res.status(201).json({
+success: true,
+message: "User registered successfully",
+token,
+user
+});
+
+} catch (error) {
+
+res.status(500).json({
+success: false,
+message: error.message
+});
+}
 };
 
-/* =========================================================
-   LOGIN
-========================================================= */
+
+
+/*
+========================================
+LOGIN USER
+========================================
+*/
 
 export const login = async (req, res) => {
-  try {
-    const email = req.body.email?.trim().toLowerCase();
-    const password = req.body.password?.toString();
+try {
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
-    }
+const { email, password } = req.body;
 
-    const user = await User.findOne({ email }).select("+password");
-    if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+if (!email || !password) {
+return res.status(400).json({
+success: false,
+message: "Email and password required"
+});
+}
 
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
+const user = await User.findOne({ email });
 
-    res.json({
-      message: "Login successful",
-      token: generateToken(user._id),
-      role: user.role,
-    });
+if (!user) {
+return res.status(400).json({
+success: false,
+message: "Invalid email or password"
+});
+}
 
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+const isMatch = await bcrypt.compare(
+password,
+user.password
+);
+
+if (!isMatch) {
+return res.status(400).json({
+success: false,
+message: "Invalid email or password"
+});
+}
+
+const token = generateToken(user);
+
+res.status(200).json({
+success: true,
+message: "Login successful",
+token,
+user
+});
+
+} catch (error) {
+
+res.status(500).json({
+success: false,
+message: error.message
+});
+}
 };
 
-/* =========================================================
-   FORGOT PASSWORD
-========================================================= */
+
+
+/*
+========================================
+CHECK EMAIL EXISTS
+========================================
+*/
+
+export const checkEmailExists = async (req, res) => {
+try {
+
+const { email } = req.body;
+
+if (!email) {
+return res.status(400).json({
+success: false,
+message: "Email is required"
+});
+}
+
+const user = await User.findOne({ email });
+
+if (!user) {
+return res.status(404).json({
+success: false,
+message: "User not found"
+});
+}
+
+res.status(200).json({
+success: true,
+message: "Email exists"
+});
+
+} catch (error) {
+
+res.status(500).json({
+success: false,
+message: error.message
+});
+}
+};
+
+
+
+/*
+========================================
+FORGOT PASSWORD
+Generate Token and Send Email
+========================================
+*/
 
 export const forgotPassword = async (req, res) => {
-  try {
-    const email = req.body.email?.trim().toLowerCase();
+try {
 
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
-    }
+const { email } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+if (!email) {
+return res.status(400).json({
+message: "Email is required"
+});
+}
 
-    // Generate token
-    const resetToken = crypto.randomBytes(32).toString("hex");
+const user = await User.findOne({ email });
 
-    // Hash token before saving
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
+if (!user) {
+return res.status(404).json({
+message: "User not found"
+});
+}
 
-    user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+// generate token
+const resetToken = crypto
+.randomBytes(32)
+.toString("hex");
 
-    await user.save();
+const hashedToken = crypto
+.createHash("sha256")
+.update(resetToken)
+.digest("hex");
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}&email=${email}`;
+user.resetPasswordToken = hashedToken;
 
-    await sendEmail(
-      user.email,
-      "Password Reset Request",
-      forgotPasswordMessage(resetUrl)
-    );
+user.resetPasswordExpire =
+Date.now() + 10 * 60 * 1000;
 
-    res.json({ message: "Password reset email sent" });
+await user.save();
 
-  } catch (error) {
-    console.error("Forgot password error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+// send email
+await sendResetEmail(user.email, resetToken);
+
+res.status(200).json({
+success: true,
+message: "Reset email sent"
+});
+
+} catch (error) {
+
+res.status(500).json({
+success: false,
+message: error.message
+});
+}
 };
 
-/* =========================================================
-   RESET PASSWORD
-========================================================= */
+
+
+/*
+========================================
+RESET PASSWORD
+========================================
+*/
 
 export const resetPassword = async (req, res) => {
-  try {
-    const { token, email, password } = req.body;
+try {
 
-    if (!token || !email || !password) {
-      return res.status(400).json({ message: "Token, email, and password required" });
-    }
+const { email, token, newPassword } = req.body;
 
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(token)
-      .digest("hex");
+if (!email || !token || !newPassword) {
+return res.status(400).json({
+message: "Email, token and new password required"
+});
+}
 
-    const user = await User.findOne({
-      email: email.trim().toLowerCase(),
-      resetPasswordToken: hashedToken,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
+const hashedToken = crypto
+.createHash("sha256")
+.update(token)
+.digest("hex");
 
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired token" });
-    }
+const user = await User.findOne({
+email,
+resetPasswordToken: hashedToken,
+resetPasswordExpire: { $gt: Date.now() }
+});
 
-    // Assign plain password → pre-save hook hashes automatically
-    user.password = password;
+if (!user) {
+return res.status(400).json({
+message: "Invalid or expired token"
+});
+}
 
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
+const hashedPassword = await bcrypt.hash(
+newPassword,
+10
+);
 
-    await user.save();
+user.password = hashedPassword;
 
-    await sendEmail(
-      user.email,
-      "Password Reset Successful",
-      resetSuccessMessage(user.name)
-    );
+user.resetPasswordToken = undefined;
+user.resetPasswordExpire = undefined;
 
-    res.json({ message: "Password has been reset successfully" });
+await user.save();
 
-  } catch (error) {
-    console.error("Reset password error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+res.status(200).json({
+success: true,
+message: "Password reset successful"
+});
+
+} catch (error) {
+
+res.status(500).json({
+success: false,
+message: error.message
+});
+}
 };
+
 
 /* =========================================================
    AUTH STATUS

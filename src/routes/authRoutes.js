@@ -5,7 +5,8 @@ import {
   forgotPassword, 
   resetPassword,
   authStatus,
-  logoutUser
+  logoutUser,
+  checkEmailExists
 } from "../controllers/authController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -19,6 +20,7 @@ AUTH ROUTES
 */
 router.post("/register", register);
 router.post("/login", login);
+router.post("/check-email", checkEmailExists);
 
 /*
 ========================
@@ -40,3 +42,4 @@ router.get("/status", protect, authStatus);
 router.post("/logout", protect, logoutUser);
 
 export default router;
+
