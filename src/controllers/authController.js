@@ -101,56 +101,139 @@ LOGIN USER
 ========================================
 */
 
+// export const login = async (req, res) => {
+// try {
+
+// const { email, password } = req.body;
+
+// if (!email || !password) {
+// return res.status(400).json({
+// success: false,
+// message: "Email and password required"
+// });
+// }
+
+// const user = await User.findOne({ email });
+
+// if (!user) {
+// return res.status(400).json({
+// success: false,
+// message: "Invalid email or password"
+// });
+// }
+
+// const isMatch = await bcrypt.compare(
+// password,
+// user.password
+// );
+
+// if (!isMatch) {
+// return res.status(400).json({
+// success: false,
+// message: "Invalid email or password"
+// });
+// }
+
+// const token = generateToken(user);
+
+// res.status(200).json({
+// success: true,
+// message: "Login successful",
+// token,
+// user
+// });
+
+// } catch (error) {
+
+// res.status(500).json({
+// success: false,
+// message: error.message
+// });
+// }
+// };
+
 export const login = async (req, res) => {
 try {
-
 const { email, password } = req.body;
 
+console.log("================================");
+console.log("LOGIN DEBUG START");
+console.log("Request Body:", req.body);
+console.log("Email:", email);
+console.log("Entered Password:", password);
+console.log("Type of Entered Password:", typeof password);
+console.log("================================");
+
+// Check email and password
 if (!email || !password) {
+console.log("Email or password missing");
 return res.status(400).json({
 success: false,
-message: "Email and password required"
+message: "Email and password required",
 });
 }
 
-const user = await User.findOne({ email });
+// Fetch user with password
+const user = await User.findOne({ email }).select("+password");
+
+console.log("User Found:", user);
+console.log("Password from DB:", user?.password);
+console.log("Type of DB Password:", typeof user?.password);
 
 if (!user) {
+console.log("User not found in database");
 return res.status(400).json({
 success: false,
-message: "Invalid email or password"
+message: "Invalid email or password",
 });
 }
 
-const isMatch = await bcrypt.compare(
-password,
-user.password
-);
-
-if (!isMatch) {
+if (!user.password) {
+console.log("Password not found in database");
 return res.status(400).json({
 success: false,
-message: "Invalid email or password"
+message: "Password missing in database",
+});
+}
+
+console.log("Running bcrypt.compare...");
+
+const isMatch = await bcrypt.compare(password, user.password);
+
+console.log("Password Match Result:", isMatch);
+
+if (!isMatch) {
+console.log("Password does not match");
+return res.status(400).json({
+success: false,
+message: "Invalid email or password",
 });
 }
 
 const token = generateToken(user);
 
+console.log("Login successful, token generated");
+
 res.status(200).json({
 success: true,
 message: "Login successful",
 token,
-user
+user,
 });
 
 } catch (error) {
+console.log("================================");
+console.log("LOGIN ERROR OCCURRED");
+console.log(error);
+console.log("================================");
 
 res.status(500).json({
 success: false,
-message: error.message
+message: error.message,
 });
 }
 };
+
 
 
 
@@ -203,15 +286,14 @@ FORGOT PASSWORD
 Generate Token and Send Email
 ========================================
 */
-
 export const forgotPassword = async (req, res) => {
 try {
-
 const { email } = req.body;
 
 if (!email) {
 return res.status(400).json({
-message: "Email is required"
+success: false,
+message: "Email is required",
 });
 }
 
@@ -219,14 +301,12 @@ const user = await User.findOne({ email });
 
 if (!user) {
 return res.status(404).json({
-message: "User not found"
+success: false,
+message: "User not found",
 });
 }
 
-// generate token
-const resetToken = crypto
-.randomBytes(32)
-.toString("hex");
+const resetToken = crypto.randomBytes(32).toString("hex");
 
 const hashedToken = crypto
 .createHash("sha256")
@@ -234,25 +314,21 @@ const hashedToken = crypto
 .digest("hex");
 
 user.resetPasswordToken = hashedToken;
+user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
 
-user.resetPasswordExpire =
-Date.now() + 10 * 60 * 1000;
+await user.save({ validateBeforeSave: false });
 
-await user.save();
-
-// send email
 await sendResetEmail(user.email, resetToken);
 
 res.status(200).json({
 success: true,
-message: "Reset email sent"
+message: "Reset email sent",
 });
 
 } catch (error) {
-
 res.status(500).json({
 success: false,
-message: error.message
+message: error.message,
 });
 }
 };
@@ -264,15 +340,14 @@ message: error.message
 RESET PASSWORD
 ========================================
 */
-
 export const resetPassword = async (req, res) => {
 try {
-
 const { email, token, newPassword } = req.body;
 
 if (!email || !token || !newPassword) {
 return res.status(400).json({
-message: "Email, token and new password required"
+success: false,
+message: "Email, token and new password required",
 });
 }
 
@@ -284,21 +359,18 @@ const hashedToken = crypto
 const user = await User.findOne({
 email,
 resetPasswordToken: hashedToken,
-resetPasswordExpire: { $gt: Date.now() }
-});
+resetPasswordExpire: { $gt: Date.now() },
+}).select("+password");
 
 if (!user) {
 return res.status(400).json({
-message: "Invalid or expired token"
+success: false,
+message: "Invalid or expired token",
 });
 }
 
-const hashedPassword = await bcrypt.hash(
-newPassword,
-10
-);
-
-user.password = hashedPassword;
+// assign new password (model will hash it)
+user.password = newPassword;
 
 user.resetPasswordToken = undefined;
 user.resetPasswordExpire = undefined;
@@ -307,14 +379,13 @@ await user.save();
 
 res.status(200).json({
 success: true,
-message: "Password reset successful"
+message: "Password reset successful",
 });
 
 } catch (error) {
-
 res.status(500).json({
 success: false,
-message: error.message
+message: error.message,
 });
 }
 };
