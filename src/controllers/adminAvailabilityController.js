@@ -6,53 +6,74 @@ CREATE AVAILABILITY
 ==================================================
 */
 export const createAvailability = async (req, res) => {
-  try {
-    const { date, startTime, endTime, price, hours } = req.body;
+try {
+const { date, startTime, endTime, price, hours } = req.body;
 
-    if (!date || !startTime || !endTime || !price || !hours) {
-      return res.status(400).json({
-        success: false,
-        message: "date, startTime, endTime, price and hours are required",
-      });
-    }
+if (!date || !startTime || !endTime || !price || !hours) {
+return res.status(400).json({
+success: false,
+message: "date, startTime, endTime, price and hours are required",
+});
+}
 
-    const parsedDate = new Date(date);
-    parsedDate.setHours(0, 0, 0, 0);
+const parsedDate = new Date(date);
+parsedDate.setHours(0, 0, 0, 0);
 
-    const existing = await Availability.findOne({
-      date: parsedDate,
-      startTime,
-      endTime,
-    });
+// Convert times to minutes for easier comparison
+const [startHour, startMin] = startTime.split(":").map(Number);
+const [endHour, endMin] = endTime.split(":").map(Number);
+const startMinutes = startHour * 60 + startMin;
+const endMinutes = endHour * 60 + endMin;
 
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "This slot already exists",
-      });
-    }
+if (startMinutes >= endMinutes) {
+return res.status(400).json({
+success: false,
+message: "startTime must be before endTime",
+});
+}
 
-    const availability = await Availability.create({
-      date: parsedDate,
-      startTime,
-      endTime,
-      price,
-      hours,
-    });
+// Find all slots for that day
+const existingSlots = await Availability.find({ date: parsedDate });
 
-    res.status(201).json({
-      success: true,
-      message: "Availability created successfully",
-      availability,
-    });
-  } catch (error) {
-    console.error("Create availability error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+// Check for overlap
+const overlap = existingSlots.some(slot => {
+const [sHour, sMin] = slot.startTime.split(":").map(Number);
+const [eHour, eMin] = slot.endTime.split(":").map(Number);
+const slotStart = sHour * 60 + sMin;
+const slotEnd = eHour * 60 + eMin;
+
+return Math.max(slotStart, startMinutes) < Math.min(slotEnd, endMinutes);
+});
+
+if (overlap) {
+return res.status(400).json({
+success: false,
+message: "This time slot overlaps with an existing availability. Please choose a different time.",
+});
+}
+
+const availability = await Availability.create({
+date: parsedDate,
+startTime,
+endTime,
+price,
+hours,
+});
+
+res.status(201).json({
+success: true,
+message: "Availability created successfully",
+availability,
+});
+} catch (error) {
+console.error("Create availability error:", error);
+res.status(500).json({
+success: false,
+message: error.message,
+});
+}
 };
+
 
 /*
 ==================================================

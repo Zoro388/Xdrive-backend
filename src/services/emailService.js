@@ -1,5 +1,8 @@
 import resend  from "../utils/resend.js";
 
+import dotenv from "dotenv"
+dotenv.config();
+
 /*
 ========================================
 SOCIAL FOOTER
@@ -102,18 +105,24 @@ X-Drive Driving School © ${new Date().getFullYear()}
 RESET PASSWORD EMAIL
 ========================================
 */
-
 export const sendResetEmail = async (email, token) => {
 
+const frontendUrl =
+process.env.FRONTEND_URL || "http://localhost:3000";
+
 const resetLink =
-`${process.env.FRONTEND_URL}/reset-password?token=${token}&email=${email}`;
+`${frontendUrl}/reset-password?token=${token}&email=${email}`;
+
+console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
+console.log("EMAIL:", email);
+console.log("TOKEN:", token);
+console.log("RESET LINK:", resetLink);
 
 await resend.emails.send({
 from: process.env.EMAIL_FROM,
 to: email,
 subject: "Reset Your Password",
 html: `
-
 <div style="font-family:Arial; background:#f4f6f8; padding:40px;">
 
 <div style="max-width:600px; margin:auto; background:white; border-radius:8px;">
@@ -154,6 +163,7 @@ X-Drive Driving School © ${new Date().getFullYear()}
 `
 });
 };
+
 
 
 
