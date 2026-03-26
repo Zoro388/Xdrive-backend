@@ -4,7 +4,7 @@ const availabilitySchema = new mongoose.Schema(
   {
     date: {
       type: Date,
-      required: true,
+      required: false,
     },
     startTime: {
       type: String, // e.g., "09:00 AM"
