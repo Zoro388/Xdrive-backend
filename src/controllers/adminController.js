@@ -24,7 +24,7 @@ export const getAdminDashboard = async (req, res) => {
     });
 
     const upcomingLessons = await Booking.countDocuments({
-      status: "booked",
+      status: {$in: ["pending", "approved"]},
     });
 
     const availableSlots = await Availability.countDocuments({
@@ -178,7 +178,7 @@ export const updateBookingStatus = async (req, res) => {
     }
 
     // Optional: check valid statuses
-    const validStatuses = ["booked", "completed", "cancelled"];
+    const validStatuses = ["pending", "approved", "completed", "cancelled"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: "Invalid status" });
     }
@@ -205,4 +205,88 @@ export const updateBookingStatus = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+};
+
+
+import { sendApprovedBookingEmail } from "../services/emailService.js";
+
+/*
+==================================================
+APPROVE BOOKING
+==================================================
+*/
+export const approveBooking = async (req, res) => {
+try {
+
+const { bookingId } = req.params;
+
+const booking = await Booking.findById(bookingId)
+.populate("student", "name email")
+.populate("slot")
+.populate("instructor", "name");
+
+if (!booking) {
+return res.status(404).json({
+success: false,
+message: "Booking not found",
+});
+}
+
+if (booking.status === "approved") {
+return res.status(400).json({
+success: false,
+message: "Booking already approved",
+});
+}
+
+const slot = await Availability.findById(booking.slot._id);
+
+if (!slot) {
+return res.status(404).json({
+success: false,
+message: "Slot not found",
+});
+}
+
+if (slot.isBooked) {
+return res.status(400).json({
+success: false,
+message: "Slot already booked",
+});
+}
+
+// update booking
+booking.status = "approved";
+
+// lock slot
+slot.isBooked = true;
+slot.bookedBy = booking.student._id;
+
+await slot.save();
+await booking.save();
+
+// send email to student
+await sendApprovedBookingEmail(
+booking.student.email,
+booking.student.name,
+slot.date,
+`${slot.startTime} - ${slot.endTime}`,
+booking.instructor.name
+);
+
+res.status(200).json({
+success: true,
+message: "Booking approved and email sent",
+booking,
+});
+
+} catch (error) {
+
+console.error("Approve booking error:", error);
+
+res.status(500).json({
+success: false,
+message: error.message,
+});
+}
 };

@@ -4,7 +4,8 @@ import {
   updateBookingStatus,  // ✅ now exists
   getAdminDashboard,
   markLessonCompleted,
-  cancelBooking
+  cancelBooking,
+  approveBooking
 } from "../controllers/adminController.js";
 
 import {
@@ -54,6 +55,7 @@ router.delete("/availability/:availabilityId", deleteAvailability); // Delete
 router.put("/bookings/complete/:bookingId", markLessonCompleted);
 
 router.put("/bookings/cancel/:bookingId", cancelBooking);
+router.put("/approve/:bookingId", approveBooking);
 
 export default router;
 

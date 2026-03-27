@@ -11,7 +11,7 @@ const { date, startTime, endTime, price, hours } = req.body;
 
 if (!date || !startTime || !endTime || !price || !hours) {
 return res.status(400).json({
-success: false,
+// success: false,
 message: "date, startTime, endTime, price and hours are required",
 });
 }

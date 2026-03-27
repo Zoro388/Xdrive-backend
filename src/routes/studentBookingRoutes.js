@@ -1,36 +1,60 @@
 import express from "express";
+
 import {
-  getBookingHistory,
-  getUpcomingBookings,
-  cancelBooking,
-  // updateBooking, // ✅ matches controller
-  bookLesson,
-  getAvailableSlots
+getBookingHistory,
+getUpcomingBookings,
+cancelBooking,
+bookLesson,
+getAvailableSlots
 } from "../controllers/studentBookingController.js";
+
 import { protect } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-// All routes protected and only for students
+/*
+========================================
+PROTECTED STUDENT ROUTES
+========================================
+*/
+
 router.use(protect);
 router.use(authorizeRoles("student"));
 
-// Get booking history
-router.get("/history", getBookingHistory);
+/*
+========================================
+AVAILABLE SLOTS
+========================================
+*/
+router.get("/availability", getAvailableSlots);
 
-// Get upcoming bookings
-router.get("/upcoming", getUpcomingBookings);
-
-// Cancel booking
-router.put("/cancel/:bookingId", cancelBooking);
-
-// // Update booking (reschedule)
-// router.put("/update/:bookingId", updateBooking);
-
-// Book a lesson
+/*
+========================================
+BOOK LESSON
+========================================
+*/
 router.post("/book", bookLesson);
 
-// get available slots
-router.get("/availability", getAvailableSlots);
+/*
+========================================
+UPCOMING BOOKINGS
+========================================
+*/
+router.get("/upcoming", getUpcomingBookings);
+
+/*
+========================================
+BOOKING HISTORY
+========================================
+*/
+router.get("/history", getBookingHistory);
+
+/*
+========================================
+CANCEL BOOKING
+========================================
+*/
+router.put("/cancel/:bookingId", cancelBooking);
+
 export default router;

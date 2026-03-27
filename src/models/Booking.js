@@ -1,3 +1,4 @@
+// bookingModel.js
 import mongoose from "mongoose";
 
 const bookingSchema = new mongoose.Schema(
@@ -10,7 +11,8 @@ const bookingSchema = new mongoose.Schema(
     instructor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: false, // <- changed from true to false
+      default: null,   // <- ensures no error if missing
     },
     slot: {
       type: mongoose.Schema.Types.ObjectId,

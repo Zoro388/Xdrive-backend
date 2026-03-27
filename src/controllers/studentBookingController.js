@@ -1,116 +1,154 @@
 import Booking from "../models/Booking.js";
 import Availability from "../models/Availability.js";
 
-
-
 /*
-==================================================
-BOOK SLOT
-==================================================
+========================================
+GET AVAILABLE SLOTS
+========================================
 */
-export const bookLesson = async (req, res) => {
+export const getAvailableSlots = async (req, res) => {
 try {
 
-const { slotId } = req.body;
+const slots = await Availability.find({
+isBooked: false,
+isActive: true
+}).populate("instructor", "name email");
 
-if (!slotId) {
-return res.status(400).json({
-success: false,
-message: "slotId is required",
-});
-}
-
-const slot = await Availability.findById(slotId)
-.populate("instructor");
-
-if (!slot) {
-return res.status(404).json({
-success: false,
-message: "Slot not found",
-});
-}
-
-if (slot.isBooked) {
-return res.status(400).json({
-success: false,
-message: "This slot has already been booked",
-});
-}
-
-const existingBooking = await Booking.findOne({
-student: req.user._id,
-slot: slotId
-});
-
-if (existingBooking) {
-return res.status(400).json({
-success: false,
-message: "You already booked this slot",
-});
-}
-
-const booking = await Booking.create({
-student: req.user._id,
-slot: slot._id,
-status: "pending",
-});
-
-res.status(201).json({
+res.status(200).json({
 success: true,
-message: "Booking created and waiting for admin approval",
-data: booking
+count: slots.length,
+slots
 });
 
 } catch (error) {
-console.error("Book lesson error:", error);
 
 res.status(500).json({
 success: false,
-message: error.message,
+message: error.message
 });
 }
 };
 
+
 /*
 ========================================
-CANCEL BOOKING
+BOOK LESSON
 ========================================
 */
-export const cancelBooking = async (req, res) => {
+
+
+
+export const bookLesson = async (req, res) => {
   try {
+    const { slotId } = req.body;
+    if (!slotId) {
+      return res.status(400).json({ success: false, message: "slotId is required" });
+    }
 
-    const { bookingId } = req.params;
+    const slot = await Availability.findById(slotId);
+    if (!slot) {
+      return res.status(404).json({ success: false, message: "Slot not found" });
+    }
 
-    const booking = await Booking.findOne({
-      _id: bookingId,
-      student: req.user._id
+    if (slot.isBooked) {
+      return res.status(400).json({ success: false, message: "Slot already booked" });
+    }
+
+    const existingBooking = await Booking.findOne({
+      student: req.user._id,
+      slot: slotId,
+      status: { $in: ["pending", "approved"] }
     });
 
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
+    if (existingBooking) {
+      return res.status(400).json({ success: false, message: "You already booked this slot" });
     }
 
-    const slot = await Availability.findById(booking.slot);
+    const booking = await Booking.create({
+      student: req.user._id,
+      instructor: slot.instructor || null, // <- safe fallback
+      slot: slot._id,
+      status: "pending"
+    });
 
-    if (slot) {
-      slot.isBooked = false;
-      slot.bookedBy = null;
-      await slot.save();
-    }
-
-    booking.status = "cancelled";
-    await booking.save();
-
-    res.json({
-      message: "Booking cancelled successfully",
+    res.status(201).json({
+      success: true,
+      message: "Booking created and waiting for admin approval",
       booking
     });
 
   } catch (error) {
-    console.error("Cancel booking error:", error);
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+// export const bookLesson = async (req, res) => {
+// try {
+
+// const { slotId } = req.body;
+
+// if (!slotId) {
+// return res.status(400).json({
+// success: false,
+// message: "slotId is required"
+// });
+// }
+
+// const slot = await Availability.findById(slotId);
+
+// if (!slot) {
+// return res.status(404).json({
+// success: false,
+// message: "Slot not found"
+// });
+// }
+
+// if (slot.isBooked) {
+// return res.status(400).json({
+// success: false,
+// message: "Slot already booked"
+// });
+// }
+
+// const existingBooking = await Booking.findOne({
+// student: req.user._id,
+// slot: slotId,
+// status: { $in: ["pending", "approved"] }
+// });
+
+// if (existingBooking) {
+// return res.status(400).json({
+// success: false,
+// message: "You already booked this slot"
+// });
+// }
+
+// const booking = await Booking.create({
+// student: req.user._id,
+// instructor: slot.instructor,
+// slot: slot._id,
+// status: "pending"
+// });
+
+// res.status(201).json({
+// success: true,
+// message: "Booking created and waiting for admin approval",
+// booking
+// });
+
+// } catch (error) {
+
+// console.error(error);
+
+// res.status(500).json({
+// success: false,
+// message: error.message
+// });
+// }
+// };
+
 
 /*
 ========================================
@@ -124,14 +162,8 @@ const bookings = await Booking.find({
 student: req.user._id,
 status: { $in: ["pending", "approved"] }
 })
-.populate({
-path: "slot",
-select: "date startTime endTime price",
-populate: {
-path: "instructor",
-select: "name email"
-}
-})
+.populate("slot")
+.populate("instructor", "name email")
 .sort({ createdAt: -1 });
 
 res.status(200).json({
@@ -141,14 +173,13 @@ bookings
 });
 
 } catch (error) {
-console.error("Upcoming booking error:", error);
+
 res.status(500).json({
 success: false,
 message: error.message
 });
 }
 };
-
 
 
 /*
@@ -163,14 +194,8 @@ const history = await Booking.find({
 student: req.user._id,
 status: { $in: ["completed", "cancelled"] }
 })
-.populate({
-path: "slot",
-select: "date startTime endTime price",
-populate: {
-path: "instructor",
-select: "name email"
-}
-})
+.populate("slot")
+.populate("instructor", "name email")
 .sort({ createdAt: -1 });
 
 res.status(200).json({
@@ -180,7 +205,7 @@ history
 });
 
 } catch (error) {
-console.error("Booking history error:", error);
+
 res.status(500).json({
 success: false,
 message: error.message
@@ -191,25 +216,52 @@ message: error.message
 
 /*
 ========================================
-GET AVAILABLE SLOTS
+CANCEL BOOKING
 ========================================
 */
-export const getAvailableSlots = async (req, res) => {
-  try {
+export const cancelBooking = async (req, res) => {
+try {
 
-    const today = new Date();
-    today.setHours(0,0,0,0);
+const { bookingId } = req.params;
 
-    const slots = await Availability.find({
-      isActive: true,
-      isBooked: false,
-      date: { $gte: today }
-    }).sort({ date: 1 });
+const booking = await Booking.findById(bookingId);
 
-    res.json({ slots });
+if (!booking) {
+return res.status(404).json({
+success: false,
+message: "Booking not found"
+});
+}
 
-  } catch (error) {
-    console.error("Available slots error:", error);
-    res.status(500).json({ message: error.message });
-  }
+if (booking.student.toString() !== req.user._id.toString()) {
+return res.status(403).json({
+success: false,
+message: "Unauthorized"
+});
+}
+
+if (booking.status !== "pending") {
+return res.status(400).json({
+success: false,
+message: "Only pending bookings can be cancelled"
+});
+}
+
+booking.status = "cancelled";
+
+await booking.save();
+
+res.status(200).json({
+success: true,
+message: "Booking cancelled successfully",
+booking
+});
+
+} catch (error) {
+
+res.status(500).json({
+success: false,
+message: error.message
+});
+}
 };
