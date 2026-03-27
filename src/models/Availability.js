@@ -3,14 +3,13 @@ import mongoose from "mongoose";
 const availabilitySchema = new mongoose.Schema(
   {
     instructor: {
-      type:mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
-      default: null
+      required: false, // <-- make optional
+      default: null    // <-- default to null
     },
     date: {
       type: Date,
-      // required: false,
     },
     startTime: {
       type: String, // e.g., "09:00 AM"
