@@ -60,7 +60,7 @@ html: `
 <div style="max-width:600px; margin:auto; background:white; border-radius:8px; overflow:hidden;">
 
 <div style="background:#012169; padding:20px; color:white; text-align:center;">
-<h2>X-Drive Driving School</h2>
+<h2>X-Drive Academy</h2>
 </div>
 
 <div style="padding:30px;">
