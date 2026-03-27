@@ -5,7 +5,8 @@ const availabilitySchema = new mongoose.Schema(
     instructor: {
       type:mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      required: true,
+      default: null
     },
     date: {
       type: Date,
