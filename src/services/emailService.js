@@ -223,3 +223,68 @@ X-Drive Driving School
 `
 });
 };
+
+
+/*
+========================================
+BOOKING APPROVED EMAIL
+========================================
+*/
+
+export const sendApprovedBookingEmail = async (
+ email,
+ name,
+ date,
+ time,
+ instructor
+) => {
+
+ console.log("Sending approval email to:", email);
+
+ await resend.emails.send({
+ from: process.env.EMAIL_FROM,
+ to: email,
+ subject: "Booking Approved - X-Drive Driving School",
+ html: `
+
+<div style="font-family:Arial; background:#f4f6f8; padding:40px;">
+
+<div style="max-width:600px; margin:auto; background:white; border-radius:8px;">
+
+<div style="background:#012169; padding:20px; color:white; text-align:center;">
+<h2>Booking Approved</h2>
+</div>
+
+<div style="padding:30px;">
+
+<h3 style="color:#012169;">Hello ${name}</h3>
+
+<p>Your driving lesson booking has been approved by admin.</p>
+
+<div style="background:#f9f9f9; padding:20px; border-radius:5px;">
+
+<p><strong>Date:</strong> ${date}</p>
+<p><strong>Time:</strong> ${time}</p>
+<p><strong>Instructor:</strong> ${instructor}</p>
+<p><strong>Status:</strong> Approved</p>
+
+</div>
+
+<p style="margin-top:20px;">
+Please arrive 10 minutes before your lesson time.
+</p>
+
+${socialFooter}
+
+</div>
+
+<div style="background:#012169; padding:15px; text-align:center; color:white;">
+X-Drive Driving School © ${new Date().getFullYear()}
+</div>
+
+</div>
+
+</div>
+`
+ });
+};

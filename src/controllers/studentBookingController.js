@@ -1,74 +1,76 @@
 import Booking from "../models/Booking.js";
 import Availability from "../models/Availability.js";
 
+
+
 /*
 ==================================================
 BOOK SLOT
 ==================================================
 */
 export const bookLesson = async (req, res) => {
-  try {
-    const { slotId } = req.body;
+try {
 
-    // Validate slotId
-    if (!slotId) {
-      return res.status(400).json({
-        success: false,
-        message: "slotId is required",
-      });
-    }
+const { slotId } = req.body;
 
-    // Find the availability slot
-    const slot = await Availability.findById(slotId);
+if (!slotId) {
+return res.status(400).json({
+success: false,
+message: "slotId is required",
+});
+}
 
-    if (!slot) {
-      return res.status(404).json({
-        success: false,
-        message: "Slot not found",
-      });
-    }
+const slot = await Availability.findById(slotId)
+.populate("instructor");
 
-    // Prevent double booking
-    if (slot.isBooked) {
-      return res.status(400).json({
-        success: false,
-        message: "This slot has already been booked",
-      });
-    }
+if (!slot) {
+return res.status(404).json({
+success: false,
+message: "Slot not found",
+});
+}
 
-    // Mark slot as booked
-    slot.isBooked = true;
-    slot.bookedBy = req.user._id;
+if (slot.isBooked) {
+return res.status(400).json({
+success: false,
+message: "This slot has already been booked",
+});
+}
 
-    await slot.save();
+const existingBooking = await Booking.findOne({
+student: req.user._id,
+slot: slotId
+});
 
-    // Create booking record
-    const booking = await Booking.create({
-      student: req.user._id,
-      slot: slot._id,
-      status: "booked",
-    });
+if (existingBooking) {
+return res.status(400).json({
+success: false,
+message: "You already booked this slot",
+});
+}
 
-    res.status(201).json({
-      success: true,
-      message: "Lesson booked successfully",
-      data: {
-        bookingId: booking._id,
-        slotId: slot._id,
-        date: slot.date,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-      },
-    });
+const booking = await Booking.create({
+student: req.user._id,
+slot: slot._id,
+status: "pending",
+});
 
-  } catch (error) {
-    console.error("Book lesson error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+res.status(201).json({
+success: true,
+message: "Booking created and waiting for admin approval",
+data: booking
+});
+
+} catch (error) {
+console.error("Book lesson error:", error);
+
+res.status(500).json({
+success: false,
+message: error.message,
+});
+}
 };
+
 /*
 ========================================
 CANCEL BOOKING
@@ -110,29 +112,43 @@ export const cancelBooking = async (req, res) => {
   }
 };
 
-
 /*
 ========================================
 GET UPCOMING BOOKINGS
 ========================================
 */
 export const getUpcomingBookings = async (req, res) => {
-  try {
+try {
 
-    const bookings = await Booking.find({
-      student: req.user._id,
-      status: "booked"
-    })
-      .populate("slot")
-      .sort({ createdAt: 1 });
+const bookings = await Booking.find({
+student: req.user._id,
+status: { $in: ["pending", "approved"] }
+})
+.populate({
+path: "slot",
+select: "date startTime endTime price",
+populate: {
+path: "instructor",
+select: "name email"
+}
+})
+.sort({ createdAt: -1 });
 
-    res.json({ bookings });
+res.status(200).json({
+success: true,
+count: bookings.length,
+bookings
+});
 
-  } catch (error) {
-    console.error("Upcoming booking error:", error);
-    res.status(500).json({ message: error.message });
-  }
+} catch (error) {
+console.error("Upcoming booking error:", error);
+res.status(500).json({
+success: false,
+message: error.message
+});
+}
 };
+
 
 
 /*
@@ -141,30 +157,35 @@ GET BOOKING HISTORY
 ========================================
 */
 export const getBookingHistory = async (req, res) => {
-  try {
+try {
 
-    const history = await Booking.find({
-      student: req.user._id,
-      status: { $in: ["completed", "cancelled"] }
-    })
-      .populate({
-        path: "slot",
-        select: "date startTime endTime price"
-      })
-      .sort({ createdAt: -1 });
+const history = await Booking.find({
+student: req.user._id,
+status: { $in: ["completed", "cancelled"] }
+})
+.populate({
+path: "slot",
+select: "date startTime endTime price",
+populate: {
+path: "instructor",
+select: "name email"
+}
+})
+.sort({ createdAt: -1 });
 
-      res.status(200).json({
-        success: true,
-        count: history.length,
-        history
-      });
+res.status(200).json({
+success: true,
+count: history.length,
+history
+});
 
-  } catch (error) {
-    console.error("Booking history error:", error);
-    res.status(500).json({ 
-      success: false,
-      message: error.message });
-  }
+} catch (error) {
+console.error("Booking history error:", error);
+res.status(500).json({
+success: false,
+message: error.message
+});
+}
 };
 
 
