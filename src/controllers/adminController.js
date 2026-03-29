@@ -1,7 +1,7 @@
 import Booking from "../models/Booking.js";
 import User from "../models/User.js";
 import Availability from "../models/Availability.js";
-
+import { sendApprovedBookingEmail } from "../services/emailService.js";
 /*
 ==================================================
 ADMIN DASHBOARD
@@ -208,7 +208,7 @@ export const updateBookingStatus = async (req, res) => {
 };
 
 
-import { sendApprovedBookingEmail } from "../services/emailService.js";
+
 
 /*
 ==================================================
