@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import resend from "../utils/resend.js"
 
 const sendEmail = async (to, subject, html) => {
   try {

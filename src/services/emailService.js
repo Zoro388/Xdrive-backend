@@ -224,7 +224,6 @@ X-Drive Driving School
 });
 };
 
-
 /*
 ========================================
 BOOKING APPROVED EMAIL
@@ -239,9 +238,25 @@ export const sendApprovedBookingEmail = async (
  instructor
 ) => {
 
- console.log("Sending approval email to:", email);
+ try {
 
- await resend.emails.send({
+ console.log("Sending approval email to:", email);
+ console.log("EMAIL_FROM:", process.env.EMAIL_FROM);
+ console.log("Instructor:", instructor);
+
+ // check resend
+ if (!resend) {
+ console.log("Resend is not initialized");
+ return;
+ }
+
+ // validate required fields
+ if (!email) {
+ console.log("Student email missing");
+ return;
+ }
+
+ const response = await resend.emails.send({
  from: process.env.EMAIL_FROM,
  to: email,
  subject: "Booking Approved - X-Drive Driving School",
@@ -287,4 +302,12 @@ X-Drive Driving School © ${new Date().getFullYear()}
 </div>
 `
  });
+
+ console.log("Resend response:", response);
+
+ } catch (error) {
+
+ console.error("Booking approval email error:", error.message);
+
+ }
 };

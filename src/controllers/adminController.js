@@ -222,8 +222,15 @@ const { bookingId } = req.params;
 
 const booking = await Booking.findById(bookingId)
 .populate("student", "name email")
-.populate("slot")
-.populate("instructor", "name");
+.populate({
+  path: "slot",
+  populate:{
+    path: "instructor",
+  select: "name"
+  }
+})
+
+("instructor", "name");
 
 if (!booking) {
 return res.status(404).json({
@@ -248,12 +255,12 @@ message: "Slot not found",
 });
 }
 
-if (slot.isBooked) {
-return res.status(400).json({
-success: false,
-message: "Slot already booked",
-});
-}
+// if (slot.isBooked) {
+// return res.status(400).json({
+// success: false,
+// message: "Slot already booked",
+// });
+// }
 
 // update booking
 booking.status = "approved";
@@ -271,7 +278,7 @@ booking.student.email,
 booking.student.name,
 slot.date,
 `${slot.startTime} - ${slot.endTime}`,
-booking.instructor.name
+booking.slot.instructor?.name || "Instructor"
 );
 
 res.status(200).json({
