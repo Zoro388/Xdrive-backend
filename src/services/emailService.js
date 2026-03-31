@@ -259,7 +259,7 @@ export const sendApprovedBookingEmail = async (
  const response = await resend.emails.send({
  from: process.env.EMAIL_FROM,
  to: email,
- subject: "Booking Approved - X-Drive Driving School",
+ subject: "Booking Approved - X-Drive Academy",
  html: `
 
 <div style="font-family:Arial; background:#f4f6f8; padding:40px;">

@@ -1,5 +1,7 @@
 import Booking from "../models/Booking.js";
 import Availability from "../models/Availability.js";
+import { sendBookingEmail } from "../services/emailService.js"
+import User from "../models/User.js"
 
 /*
 ========================================
@@ -37,51 +39,86 @@ BOOK LESSON
 */
 
 
-
 export const bookLesson = async (req, res) => {
-  try {
-    const { slotId } = req.body;
-    if (!slotId) {
-      return res.status(400).json({ success: false, message: "slotId is required" });
-    }
+try {
 
-    const slot = await Availability.findById(slotId);
-    if (!slot) {
-      return res.status(404).json({ success: false, message: "Slot not found" });
-    }
+const { slotId } = req.body;
 
-    if (slot.isBooked) {
-      return res.status(400).json({ success: false, message: "Slot already booked" });
-    }
+if (!slotId) {
+return res.status(400).json({
+success: false,
+message: "slotId is required"
+});
+}
 
-    const existingBooking = await Booking.findOne({
-      student: req.user._id,
-      slot: slotId,
-      status: { $in: ["pending", "approved"] }
-    });
+const slot = await Availability.findById(slotId);
 
-    if (existingBooking) {
-      return res.status(400).json({ success: false, message: "You already booked this slot" });
-    }
+if (!slot) {
+return res.status(404).json({
+success: false,
+message: "Slot not found"
+});
+}
 
-    const booking = await Booking.create({
-      student: req.user._id,
-      instructor: slot.instructor || null, // <- safe fallback
-      slot: slot._id,
-      status: "pending"
-    });
+if (slot.isBooked) {
+return res.status(400).json({
+success: false,
+message: "Slot already booked"
+});
+}
 
-    res.status(201).json({
-      success: true,
-      message: "Booking created and waiting for admin approval",
-      booking
-    });
+const existingBooking = await Booking.findOne({
+student: req.user._id,
+slot: slotId,
+status: { $in: ["pending", "approved"] }
+});
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: error.message });
-  }
+if (existingBooking) {
+return res.status(400).json({
+success: false,
+message: "You already booked this slot"
+});
+}
+
+const booking = await Booking.create({
+student: req.user._id,
+instructor: slot.instructor || null,
+slot: slot._id,
+status: "pending"
+});
+
+// get student info
+const student = await User.findById(req.user._id);
+
+console.log("Booking created for:", student.email);
+
+// send booking email
+await sendBookingEmail(
+student.email,
+student.name,
+slot.date,
+`${slot.startTime} - ${slot.endTime}`,
+slot.instructor || "Instructor"
+);
+
+res.status(201).json({
+success: true,
+message: "Booking created and waiting for admin approval",
+booking
+});
+
+} catch (error) {
+
+console.error("Booking error:", error);
+
+res.status(500).json({
+success: false,
+message: error.message
+});
+
+}
 };
+
 
 
 // export const bookLesson = async (req, res) => {

@@ -12,7 +12,7 @@ const sendEmail = async (to, subject, html) => {
     });
 
     await transporter.sendMail({
-      from: `"XDRIVE Driving School" <${process.env.EMAIL_USER}>`,
+      from: `"Academy" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
