@@ -184,7 +184,7 @@ instructor
 await resend.emails.send({
 from: process.env.EMAIL_FROM,
 to: email,
-subject: "Booking Confirmation",
+subject: "Booking Pending",
 html: `
 
 <div style="font-family:Arial; background:#f4f6f8; padding:40px;">
@@ -199,13 +199,14 @@ html: `
 
 <h3 style="color:#012169;">Hello ${name}</h3>
 
-<p>Your lesson has been booked successfully.</p>
+<p>Your lesson has been booked successfully await approval from the admin.</p>
 
 <div style="background:#f9f9f9; padding:20px; border-radius:5px;">
 
 <p><strong>Date:</strong> ${date}</p>
 <p><strong>Time:</strong> ${time}</p>
 <p><strong>Instructor:</strong> ${instructor}</p>
+<p><strong>Status:</strong> Pending Admin Approval</p>
 
 </div>
 

@@ -209,7 +209,6 @@ export const updateBookingStatus = async (req, res) => {
 
 
 
-
 /*
 ==================================================
 APPROVE BOOKING
@@ -223,14 +222,12 @@ const { bookingId } = req.params;
 const booking = await Booking.findById(bookingId)
 .populate("student", "name email")
 .populate({
-  path: "slot",
-  populate:{
-    path: "instructor",
-  select: "name"
-  }
-})
-
-("instructor", "name");
+path: "slot",
+populate: {
+path: "instructor",
+select: "name"
+}
+});
 
 if (!booking) {
 return res.status(404).json({
@@ -255,13 +252,6 @@ message: "Slot not found",
 });
 }
 
-// if (slot.isBooked) {
-// return res.status(400).json({
-// success: false,
-// message: "Slot already booked",
-// });
-// }
-
 // update booking
 booking.status = "approved";
 
@@ -272,7 +262,10 @@ slot.bookedBy = booking.student._id;
 await slot.save();
 await booking.save();
 
-// send email to student
+console.log("Approval email to:", booking.student.email);
+console.log("Instructor:", booking.slot.instructor?.name);
+
+// send email
 await sendApprovedBookingEmail(
 booking.student.email,
 booking.student.name,
