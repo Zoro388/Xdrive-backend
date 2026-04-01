@@ -8,7 +8,7 @@ export const authorizeRoles = (...roles) => {
       });
     }
 
-    // 2️⃣ Check role
+    // 2️⃣ Check role 3
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
