@@ -148,3 +148,55 @@ export const confirmPayment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+// import Booking from "../models/Booking.js";
+
+/*
+==================================================
+CONFIRM CASH PAYMENT
+==================================================
+*/
+export const confirmCashPayment = async (req, res) => {
+try {
+
+const { bookingId } = req.params;
+
+const booking = await Booking.findById(bookingId);
+
+if (!booking) {
+return res.status(404).json({
+success: false,
+message: "Booking not found",
+});
+}
+
+if (booking.paymentStatus === "paid") {
+return res.status(400).json({
+success: false,
+message: "Payment already confirmed",
+});
+}
+
+booking.paymentStatus = "paid";
+booking.paymentMethod = "cash";
+
+await booking.save();
+
+res.status(200).json({
+success: true,
+message: "Cash payment confirmed successfully",
+booking,
+});
+
+} catch (error) {
+
+console.error("Cash payment error:", error);
+
+res.status(500).json({
+success: false,
+message: error.message,
+});
+}
+};

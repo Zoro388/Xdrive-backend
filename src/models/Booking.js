@@ -29,6 +29,11 @@ const bookingSchema = new mongoose.Schema(
       enum: ["paid", "pending"],
       default: "pending",
     },
+    paymentMethod:{
+      type: String,
+      enum: ["card", "cash", "transfer"],
+      default: "card",
+    },
     instructorRemarks: {
       type: String,
       default: "",
