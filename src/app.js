@@ -27,6 +27,7 @@ const allowedOrigins = [
   "http://localhost:3001",
   "http://localhost:5173",
   "https://xandersdrive.netlify.app",
+  "https://xdrive.org.uk",
   process.env.FRONTEND_URL, // your deployed frontend
 ];
 
