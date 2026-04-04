@@ -9,7 +9,8 @@ deleteLandingMedia,
 
 import { protect } from "../middleware/authMiddleware.js";
 import { authorizeRoles } from "../middleware/roleMiddleware.js";
-import upload from "../middleware/multer.js";
+// import upload from "../middleware/multer.js";
+import { upload, checkFileSize } from "../middleware/multer.js";
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.post(
 protect,
 authorizeRoles("admin"),
 upload.array("media", 3),
+checkFileSize,
 createLandingMedia
 );
 
@@ -43,6 +45,7 @@ router.put(
 protect,
 authorizeRoles("admin"),
 upload.array("media", 3),
+checkFileSize,
 updateLandingMedia
 );
 
