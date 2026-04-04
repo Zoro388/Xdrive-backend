@@ -305,7 +305,6 @@ X-Drive Driving School © ${new Date().getFullYear()}
  });
 
  console.log("Resend response:", response);
-
  } catch (error) {
 
  console.error("Booking approval email error:", error.message);
