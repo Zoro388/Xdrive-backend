@@ -292,43 +292,43 @@ message: error.message,
 };
 
 
-
 /*
 ========================================
 MARK BOOKING AS COMPLETED
 ========================================
 */
 
+// import Booking from "../models/Booking.js"; // adjust path if needed
+
 export const markBookingCompleted = async (req, res) => {
 try {
 const { bookingId } = req.params;
 
-const booking = await Booking.findById(bookingId);
+// Find the booking and update completed to true
+const updatedBooking = await Booking.findByIdAndUpdate(
+bookingId,
+{ completed: true },
+{ new: true } // return the updated document
+);
 
-if (!booking) {
+if (!updatedBooking) {
 return res.status(404).json({
 success: false,
 message: "Booking not found",
 });
 }
 
-booking.completed = true;
-
-await booking.save();
-
 res.status(200).json({
 success: true,
 message: "Booking marked as completed",
-booking,
+booking: updatedBooking,
 });
 
 } catch (error) {
-console.error("Complete booking error:", error);
-
+console.error("Error marking booking as completed:", error);
 res.status(500).json({
 success: false,
 message: error.message,
 });
 }
 };
-
