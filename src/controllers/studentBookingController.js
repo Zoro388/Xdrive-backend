@@ -31,13 +31,11 @@ message: error.message
 }
 };
 
-
 /*
 ========================================
 BOOK LESSON
 ========================================
 */
-
 
 export const bookLesson = async (req, res) => {
 try {
@@ -87,6 +85,16 @@ slot: slot._id,
 status: "pending"
 });
 
+/*
+========================================
+UPDATE SLOT TO BOOKED
+========================================
+*/
+slot.isBooked = true;
+slot.bookedBy = req.user._id;
+
+await slot.save();
+
 // get student info
 const student = await User.findById(req.user._id);
 
@@ -118,6 +126,7 @@ message: error.message
 
 }
 };
+
 
 
 
@@ -199,6 +208,7 @@ const bookings = await Booking.find({
 student: req.user._id,
 status: { $in: ["pending", "approved"] }
 })
+.populate("student", "name email phone")
 .populate("slot")
 .populate("instructor", "name email")
 .sort({ createdAt: -1 });
@@ -231,6 +241,7 @@ const history = await Booking.find({
 student: req.user._id,
 status: { $in: ["completed", "cancelled"] }
 })
+.populate("student", "name email phone")
 .populate("slot")
 .populate("instructor", "name email")
 .sort({ createdAt: -1 });
@@ -249,7 +260,6 @@ message: error.message
 });
 }
 };
-
 
 /*
 ========================================
@@ -286,6 +296,19 @@ message: "Only pending bookings can be cancelled"
 
 booking.status = "cancelled";
 
+/*
+========================================
+REOPEN SLOT
+========================================
+*/
+const slot = await Availability.findById(booking.slot);
+
+if (slot) {
+slot.isBooked = false;
+slot.bookedBy = null;
+await slot.save();
+}
+
 await booking.save();
 
 res.status(200).json({
@@ -300,5 +323,7 @@ res.status(500).json({
 success: false,
 message: error.message
 });
+
 }
 };
+

@@ -5,7 +5,8 @@ import {
   getAdminDashboard,
   markLessonCompleted,
   cancelBooking,
-  approveBooking
+  approveBooking,
+  markBookingCompleted
 } from "../controllers/adminController.js";
 
 import {
@@ -56,6 +57,6 @@ router.put("/bookings/complete/:bookingId", markLessonCompleted);
 
 router.put("/bookings/cancel/:bookingId", cancelBooking);
 router.put("/approve/:bookingId", approveBooking);
-
+router.put("/complete/:bookingId", protect, authorizeRoles("admin"),markBookingCompleted);
 export default router;
 

@@ -290,3 +290,45 @@ message: error.message,
 });
 }
 };
+
+
+
+/*
+========================================
+MARK BOOKING AS COMPLETED
+========================================
+*/
+
+export const markBookingCompleted = async (req, res) => {
+try {
+const { bookingId } = req.params;
+
+const booking = await Booking.findById(bookingId);
+
+if (!booking) {
+return res.status(404).json({
+success: false,
+message: "Booking not found",
+});
+}
+
+booking.completed = true;
+
+await booking.save();
+
+res.status(200).json({
+success: true,
+message: "Booking marked as completed",
+booking,
+});
+
+} catch (error) {
+console.error("Complete booking error:", error);
+
+res.status(500).json({
+success: false,
+message: error.message,
+});
+}
+};
+

@@ -57,4 +57,6 @@ CANCEL BOOKING
 */
 router.put("/cancel/:bookingId", cancelBooking);
 
+
+
 export default router;
