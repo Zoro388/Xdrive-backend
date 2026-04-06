@@ -28,6 +28,7 @@ return res.status(400).json({ success: false, message: "User already exists" });
 const user = await User.create({
 name,
 email: email.toLowerCase(),
+phone,
 password, // pre-save hook hashes automatically
 });
 
