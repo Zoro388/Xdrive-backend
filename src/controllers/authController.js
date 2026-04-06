@@ -17,31 +17,59 @@ REGISTER USER
 ================================ */
 export const register = async (req, res) => {
 try {
-const { name, email, password, phone } = req.body;
-if (!name || !email || !password || phone)
-return res.status(400).json({ success: false, message: "All fields required" });
 
-const existingUser = await User.findOne({ email: email.toLowerCase() });
+const { name, email, password, phone } = req.body;
+
+if (!name || !email || !password || !phone)
+return res.status(400).json({
+success: false,
+message: "All fields required"
+});
+
+const existingUser = await User.findOne({
+email: email.toLowerCase()
+});
+
 if (existingUser)
-return res.status(400).json({ success: false, message: "User already exists" });
+return res.status(400).json({
+success: false,
+message: "User already exists"
+});
 
 const user = await User.create({
 name,
 email: email.toLowerCase(),
 phone,
-password, // pre-save hook hashes automatically
+password // pre-save hook hashes automatically
 });
 
-try { await sendWelcomeEmail(user.email, user.name); } catch (err) { console.log("Email error:", err.message); }
+try {
+await sendWelcomeEmail(user.email, user.name);
+} catch (err) {
+console.log("Email error:", err.message);
+}
 
 const token = generateToken(user);
 
-res.status(201).json({ success: true, message: "User registered", token, user });
+res.status(201).json({
+success: true,
+message: "User registered",
+token,
+user
+});
+
 } catch (error) {
+
 console.log(error);
-res.status(500).json({ success: false, message: error.message });
+
+res.status(500).json({
+success: false,
+message: error.message
+});
+
 }
 };
+
 
 /* ===============================
 LOGIN USER
