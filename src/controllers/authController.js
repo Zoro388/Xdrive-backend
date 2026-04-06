@@ -17,8 +17,8 @@ REGISTER USER
 ================================ */
 export const register = async (req, res) => {
 try {
-const { name, email, password } = req.body;
-if (!name || !email || !password)
+const { name, email, password, phone } = req.body;
+if (!name || !email || !password || phone)
 return res.status(400).json({ success: false, message: "All fields required" });
 
 const existingUser = await User.findOne({ email: email.toLowerCase() });
