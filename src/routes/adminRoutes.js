@@ -1,18 +1,17 @@
 import express from "express";
+
 import {
-  getAllBookings,
-  updateBookingStatus,  // ✅ now exists
-  getAdminDashboard,
-  markLessonCompleted,
-  cancelBooking,
-  approveBooking,
-  markBookingCompleted
+getAllBookings,
+getAdminDashboard,
+markLessonCompleted,
+cancelBooking,
+approveBooking
 } from "../controllers/adminController.js";
 
 import {
-  createAvailability,
-  getAllAvailability,
-  deleteAvailability,
+createAvailability,
+getAllAvailability,
+deleteAvailability,
 } from "../controllers/adminAvailabilityController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -29,6 +28,7 @@ PROTECTED ADMIN ROUTES
 router.use(protect);
 router.use(authorizeRoles("admin"));
 
+
 /*
 ==================================================
 DASHBOARD
@@ -36,27 +36,31 @@ DASHBOARD
 */
 router.get("/dashboard", getAdminDashboard);
 
+
 /*
 ==================================================
 BOOKINGS MANAGEMENT
 ==================================================
 */
 router.get("/bookings", getAllBookings);
-router.put("/bookings/:bookingId", updateBookingStatus);
+
+router.put("/approve/:bookingId", approveBooking);
+
+router.put("/bookings/cancel/:bookingId", cancelBooking);
+
+router.put("/bookings/complete/:bookingId", markLessonCompleted);
+
 
 /*
 ==================================================
 AVAILABILITY MANAGEMENT
 ==================================================
 */
-router.post("/availability", createAvailability);        // Create availability
-router.get("/availability", getAllAvailability);         // Get all availability
-// router.put("/availability/:availabilityId", updateAvailability);  // Update
-router.delete("/availability/:availabilityId", deleteAvailability); // Delete
-router.put("/bookings/complete/:bookingId", markLessonCompleted);
+router.post("/availability", createAvailability);
 
-router.put("/bookings/cancel/:bookingId", cancelBooking);
-router.put("/approve/:bookingId", approveBooking);
-router.put("/complete/:bookingId", protect, authorizeRoles("admin"),markBookingCompleted);
+router.get("/availability", getAllAvailability);
+
+router.delete("/availability/:availabilityId", deleteAvailability);
+
+
 export default router;
-

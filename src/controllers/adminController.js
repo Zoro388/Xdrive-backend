@@ -2,6 +2,7 @@ import Booking from "../models/Booking.js";
 import User from "../models/User.js";
 import Availability from "../models/Availability.js";
 import { sendApprovedBookingEmail } from "../services/emailService.js";
+
 /*
 ==================================================
 ADMIN DASHBOARD
@@ -9,46 +10,46 @@ Returns platform statistics
 ==================================================
 */
 export const getAdminDashboard = async (req, res) => {
-  try {
+try {
 
-    const totalStudents = await User.countDocuments({ role: "student" });
+const totalStudents = await User.countDocuments({ role: "student" });
 
-    const totalBookings = await Booking.countDocuments();
+const totalBookings = await Booking.countDocuments();
 
-    const completedLessons = await Booking.countDocuments({
-      status: "completed",
-    });
+const completedLessons = await Booking.countDocuments({
+status: "completed",
+});
 
-    const cancelledLessons = await Booking.countDocuments({
-      status: "cancelled",
-    });
+const cancelledLessons = await Booking.countDocuments({
+status: "cancelled",
+});
 
-    const upcomingLessons = await Booking.countDocuments({
-      status: {$in: ["pending", "approved"]},
-    });
+const upcomingLessons = await Booking.countDocuments({
+status: { $in: ["pending", "approved"] },
+});
 
-    const availableSlots = await Availability.countDocuments({
-      isBooked: false,
-    });
+const availableSlots = await Availability.countDocuments({
+isBooked: false,
+});
 
-    res.status(200).json({
-      success: true,
-      dashboard: {
-        totalStudents,
-        totalBookings,
-        completedLessons,
-        cancelledLessons,
-        upcomingLessons,
-        availableSlots,
-      },
-    });
+res.status(200).json({
+success: true,
+dashboard: {
+totalStudents,
+totalBookings,
+completedLessons,
+cancelledLessons,
+upcomingLessons,
+availableSlots,
+},
+});
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+} catch (error) {
+res.status(500).json({
+success: false,
+message: error.message,
+});
+}
 };
 
 
@@ -58,155 +59,26 @@ GET ALL BOOKINGS
 ==================================================
 */
 export const getAllBookings = async (req, res) => {
-  try {
+try {
 
-    const bookings = await Booking.find()
-      .populate("student", "name email phone")
-      .populate("slot")
-      .sort({ createdAt: -1 });
+const bookings = await Booking.find()
+.populate("student", "name email phone")
+.populate("slot")
+.sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: bookings.length,
-      bookings,
-    });
+res.status(200).json({
+success: true,
+count: bookings.length,
+bookings,
+});
 
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+} catch (error) {
+res.status(500).json({
+success: false,
+message: error.message,
+});
+}
 };
-
-
-/*
-==================================================
-MARK LESSON COMPLETED
-==================================================
-*/
-export const markLessonCompleted = async (req, res) => {
-  try {
-
-    const { bookingId } = req.params;
-
-    const booking = await Booking.findById(bookingId)
-      .populate("student", "name email")
-      .populate("slot");
-
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
-    }
-
-    booking.status = "completed";
-
-    await booking.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Lesson marked as completed",
-      booking,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-
-/*
-==================================================
-CANCEL BOOKING
-==================================================
-*/
-export const cancelBooking = async (req, res) => {
-  try {
-
-    const { bookingId } = req.params;
-
-    const booking = await Booking.findById(bookingId);
-
-    if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
-    }
-
-    booking.status = "cancelled";
-
-    // free the slot again
-    const slot = await Availability.findById(booking.slot);
-
-    if (slot) {
-      slot.isBooked = false;
-      slot.bookedBy = null;
-      await slot.save();
-    }
-
-    await booking.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Booking cancelled successfully",
-      booking,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-
-export const updateBookingStatus = async (req, res) => {
-  try {
-    const { bookingId } = req.params;
-    const { status } = req.body; // expected: "completed" or "cancelled"
-
-    const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ success: false, message: "Booking not found" });
-    }
-
-    // Optional: check valid statuses
-    const validStatuses = ["pending", "approved", "completed", "cancelled"];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status" });
-    }
-
-    booking.status = status;
-
-    // If cancelling, free the slot
-    if (status === "cancelled") {
-      const slot = await Availability.findById(booking.slot);
-      if (slot) {
-        slot.isBooked = false;
-        slot.bookedBy = null;
-        await slot.save();
-      }
-    }
-
-    await booking.save();
-
-    res.status(200).json({
-      success: true,
-      message: `Booking status updated to ${status}`,
-      booking,
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
 
 
 /*
@@ -293,39 +165,99 @@ message: error.message,
 
 
 /*
-========================================
-MARK BOOKING AS COMPLETED
-========================================
+==================================================
+CANCEL BOOKING (ADMIN)
+==================================================
 */
-
-// import Booking from "../models/Booking.js"; // adjust path if needed
-
-export const markBookingCompleted = async (req, res) => {
+export const cancelBooking = async (req, res) => {
 try {
+
 const { bookingId } = req.params;
 
-// Find the booking and update completed to true
-const updatedBooking = await Booking.findByIdAndUpdate(
-bookingId,
-{ completed: true },
-{ new: true } // return the updated document
-);
+const booking = await Booking.findById(bookingId);
 
-if (!updatedBooking) {
+if (!booking) {
 return res.status(404).json({
 success: false,
 message: "Booking not found",
 });
 }
 
+if (booking.status === "completed") {
+return res.status(400).json({
+success: false,
+message: "Completed booking cannot be cancelled",
+});
+}
+
+booking.status = "cancelled";
+
+// free the slot
+const slot = await Availability.findById(booking.slot);
+
+if (slot) {
+slot.isBooked = false;
+slot.bookedBy = null;
+await slot.save();
+}
+
+await booking.save();
+
 res.status(200).json({
 success: true,
-message: "Booking marked as completed",
-booking: updatedBooking,
+message: "Booking cancelled successfully",
+booking,
 });
 
 } catch (error) {
-console.error("Error marking booking as completed:", error);
+res.status(500).json({
+success: false,
+message: error.message,
+});
+}
+};
+
+
+/*
+==================================================
+MARK LESSON COMPLETED (ADMIN)
+==================================================
+*/
+export const markLessonCompleted = async (req, res) => {
+try {
+
+const { bookingId } = req.params;
+
+const booking = await Booking.findById(bookingId)
+.populate("student", "name email phone")
+.populate("slot");
+
+if (!booking) {
+return res.status(404).json({
+success: false,
+message: "Booking not found",
+});
+}
+
+if (booking.status === "completed") {
+return res.status(400).json({
+success: false,
+message: "Booking already completed",
+});
+}
+
+booking.status = "completed";
+booking.completed = true;
+
+await booking.save();
+
+res.status(200).json({
+success: true,
+message: "Lesson marked as completed",
+booking,
+});
+
+} catch (error) {
 res.status(500).json({
 success: false,
 message: error.message,
