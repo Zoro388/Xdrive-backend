@@ -171,7 +171,6 @@ CANCEL BOOKING (ADMIN)
 */
 export const cancelBooking = async (req, res) => {
 try {
-
 const { bookingId } = req.params;
 
 const booking = await Booking.findById(bookingId);
@@ -183,10 +182,19 @@ message: "Booking not found",
 });
 }
 
+// prevent cancelling completed booking
 if (booking.status === "completed") {
 return res.status(400).json({
 success: false,
 message: "Completed booking cannot be cancelled",
+});
+}
+
+// prevent double cancel
+if (booking.status === "cancelled") {
+return res.status(400).json({
+success: false,
+message: "Booking already cancelled",
 });
 }
 
@@ -210,6 +218,7 @@ booking,
 });
 
 } catch (error) {
+console.error("Cancel booking error:", error);
 res.status(500).json({
 success: false,
 message: error.message,

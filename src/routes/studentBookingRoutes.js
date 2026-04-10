@@ -3,7 +3,7 @@ import express from "express";
 import {
 getBookingHistory,
 getUpcomingBookings,
-cancelBooking,
+// cancelBooking,
 bookLesson,
 getAvailableSlots
 } from "../controllers/studentBookingController.js";
@@ -55,7 +55,7 @@ router.get("/history", getBookingHistory);
 CANCEL BOOKING
 ========================================
 */
-router.put("/cancel/:bookingId", cancelBooking);
+// router.put("/cancel/:bookingId", cancelBooking);
 
 
 
